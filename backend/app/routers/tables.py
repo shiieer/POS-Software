@@ -9,9 +9,25 @@ from app.core.qr import (
 )
 from app.dependencies import AdminUser, DbSession
 from app.models.table import Table
-from app.schemas.table import TableCreate, TableOut
+from app.schemas.table import TableCreate, TableOut, TablePublic
 
 router = APIRouter(prefix="/tables", tags=["Tables"])
+
+
+@router.get("/verify", response_model=TablePublic)
+def verify_table(table_id: int, token: str, db: DbSession):
+    table = (
+        db.query(Table)
+        .filter(
+            Table.id == table_id,
+            Table.qr_token == token,
+            Table.is_active.is_(True),
+        )
+        .first()
+    )
+    if not table:
+        raise HTTPException(status_code=404, detail="Table not found or QR code is invalid")
+    return table
 
 
 def _serialize_table(table: Table, qr_image_url: str | None = None) -> TableOut:

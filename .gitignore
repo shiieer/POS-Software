@@ -1,21 +1,104 @@
-# OS
+# OS & System
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 
-# IDE / editors
+# IDEs & Editors
 .idea/
 .vscode/
 *.swp
 *.swo
 *~
+*.sublime-project
+*.sublime-workspace
 
-# Env & secrets (never commit)
+# Environment & Secrets (Never commit)
 .env
 .env.*
+.env.local
+.env*.local
 !.env.example
+
+# Node & Package Managers
+node_modules/
+.npm
+.pnp
+.pnp.js
+
+# Build Outputs & Bundlers
+dist/
+dist-ssr/
+build/
+web-build/
+*.local
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Vite & Frontend Caches
+.vite/
+
+# Expo & React Native (Staff App)
+.expo/
+.expo-shared/
+.metro-health-check*
+*.jks
+*.p8
+*.p12
+*.key
+*.keystore
+*.mobileprovision
+*.pem
+/app/ios/
+/app/android/
+
+# Python & Virtual Environments (Backend)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+*.egg
+venv/
+.venv/
+env/
+ENV/
+
+# Python Tooling & Linters
+.mypy_cache/
+.ruff_cache/
+.pytype/
+
+# Testing & Coverage Reports
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage/
+.tox/
+.nox/
+
+# Local Database & Storage
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Static Generated Assets (Local dev QR codes)
+backend/static/qr_codes/*.png
 
 # Logs
 *.log
+logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*

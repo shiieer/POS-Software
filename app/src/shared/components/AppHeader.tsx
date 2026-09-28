@@ -6,11 +6,7 @@ export default function AppHeader() {
 		<View className="h-14 flex-row items-center justify-between border-b border-[#D8E3FB]/80 bg-white px-4 shadow-sm">
 			<View className="flex-row items-center gap-3">
 				<View className="h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/10">
-					<MaterialCommunityIcons
-						name="coffee"
-						size={22}
-						color="#0284C7"
-					/>
+					<MaterialCommunityIcons name="coffee" size={22} color="#0284C7" />
 				</View>
 				<View className="flex-row items-center">
 					<Text className="text-base font-bold tracking-tight text-[#006194]">
@@ -21,18 +17,6 @@ export default function AppHeader() {
 							POS
 						</Text>
 					</View>
-				</View>
-			</View>
-
-			<View className="flex-row items-center gap-2">
-				<Pressable
-					className="h-8 w-8 items-center justify-center rounded-full"
-					accessibilityLabel="Sync status"
-				>
-					<Ionicons name="cloud-done" size={20} color="#059669" />
-				</Pressable>
-				<View className="h-8 w-8 items-center justify-center rounded-full bg-[#0284C7] shadow-sm">
-					<Text className="text-xs font-bold text-white">KA</Text>
 				</View>
 			</View>
 		</View>

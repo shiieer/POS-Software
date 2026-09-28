@@ -7,6 +7,14 @@ class TableCreate(BaseModel):
     name: str
 
 
+class TablePublic(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    is_active: bool
+
+
 class TableOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
