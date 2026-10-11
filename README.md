@@ -285,4 +285,3 @@ VITE_API_URL=https://api.yourdomain.com
 EXPO_PUBLIC_API_URL=https://api.yourdomain.com
 ```
 
-The LAN auto-detection only activates when the configured host is a private/local address. Production HTTPS URLs are used as-is.
