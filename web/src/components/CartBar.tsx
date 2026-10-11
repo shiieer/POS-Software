@@ -1,3 +1,5 @@
+import { formatCurrency } from "../utils/formatCurrency";
+
 interface CartBarProps {
   totalItems: number;
   totalPrice: number;
@@ -15,14 +17,11 @@ export default function CartBar({
 }: CartBarProps) {
   if (totalItems === 0) return null;
 
-  const formattedPrice =
-    totalPrice >= 100
-      ? `Rp ${totalPrice.toLocaleString("id-ID")}`
-      : `$${totalPrice.toFixed(2)}`;
+  const formattedPrice = formatCurrency(totalPrice);
 
   return (
-    <div className="fixed bottom-0 left-0 w-full px-5 py-4 z-50 bg-gradient-to-t from-surface via-surface/90 to-transparent pointer-events-none pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))]">
-      <div className="max-w-md mx-auto w-full">
+    <div className="fixed bottom-0 left-0 w-full px-4 py-4 z-50 bg-gradient-to-t from-surface via-surface/90 to-transparent pointer-events-none pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+      <div className="w-full">
         <button
           onClick={onSubmit}
           disabled={submitting}
@@ -67,3 +66,4 @@ export default function CartBar({
     </div>
   );
 }
+

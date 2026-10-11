@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { MoreDestination, MoreItem } from "../types/more";
 import MoreOption from "../components/MoreOption";
@@ -38,6 +38,12 @@ export default function MoreScreen({ onNavigate }: Props) {
 			icon: "stats-chart-outline",
 			destination: "reports",
 		},
+		{
+			key: "qris",
+			label: "QRIS Payment Settings",
+			icon: "qr-code-outline",
+			destination: "qris",
+		},
 	];
 
 	const personal: MoreItem[] = [
@@ -56,14 +62,9 @@ export default function MoreScreen({ onNavigate }: Props) {
 	];
 
 	const system: MoreItem[] = [
-		{ key: "settings", label: "App Settings", icon: "settings-outline" },
+		{ key: "settings", label: "App Settings", icon: "settings-outline", destination: "settings" },
 		{ key: "help", label: "Help & Support", icon: "help-circle-outline" },
-		{
-			key: "logout",
-			label: "Log Out",
-			icon: "log-out-outline",
-			danger: true,
-		},
+		{ key: "logout", label: "Log Out", icon: "log-out-outline", danger: true },
 	];
 
 	function handlePress(item: MoreItem) {
@@ -113,7 +114,6 @@ export default function MoreScreen({ onNavigate }: Props) {
 				{renderSection("Personal", personal)}
 				{renderSection("System", system)}
 			</ScrollView>
-
 			<LogoutModal
 				visible={showLogout}
 				onClose={() => setShowLogout(false)}

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter
 
 from app.dependencies import DbSession, StaffUser
 from app.models.order import OrderStatus
@@ -26,6 +26,11 @@ def list_orders(
     active_only: bool = True,
 ):
     return order_service.list_orders(db, status_filter=status, active_only=active_only)
+
+
+@router.get("/public/{order_id}", response_model=OrderOut)
+def get_order_public(order_id: int, db: DbSession):
+    return order_service.get_order(db, order_id)
 
 
 @router.get("/{order_id}", response_model=OrderOut)

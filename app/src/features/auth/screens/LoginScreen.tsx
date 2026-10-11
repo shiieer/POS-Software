@@ -16,40 +16,11 @@ import { useLogin } from "../hooks/useLogin";
 import { fetchActiveStaffApi } from "@/services/api/auth.api";
 import { getRecentStaff, StoredStaff } from "@/services/storage/staffStorage";
 import { UserApi } from "@/types/api/user";
+import QuickSwitchCrew from "../components/QuickSwitchCrew";
 
 type Props = {
 	onAuthenticated: () => void;
 };
-
-const AVATAR_PALETTES = [
-	{ bg: "#0284c7", text: "#ffffff" },
-	{ bg: "#fce7f3", text: "#be185d" },
-	{ bg: "#fef3c7", text: "#b45309" },
-	{ bg: "#dcfce7", text: "#16a34a" },
-	{ bg: "#ede9fe", text: "#7c3aed" },
-	{ bg: "#fee2e2", text: "#b91c1c" },
-	{ bg: "#e0f2fe", text: "#0369a1" },
-	{ bg: "#f0fdf4", text: "#15803d" },
-];
-
-function getInitials(username: string): string {
-	const parts = username.replace(/[._-]/g, " ").trim().split(/\s+/);
-	if (parts.length >= 2) {
-		return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-	}
-	return username.slice(0, 2).toUpperCase();
-}
-
-function getDisplayName(username: string): string {
-	return username
-		.replace(/[._-]/g, " ")
-		.replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-function getPalette(index: number, role: string) {
-	if (role === "admin") return AVATAR_PALETTES[0];
-	return AVATAR_PALETTES[(index % (AVATAR_PALETTES.length - 1)) + 1];
-}
 
 export default function LoginScreen({ onAuthenticated }: Props) {
 	const { form, loading, error, fieldErrors, setField, resetPassword, submit } =
@@ -87,8 +58,6 @@ export default function LoginScreen({ onAuthenticated }: Props) {
 	const handleSubmit = () => {
 		submit();
 	};
-
-	const visibleCrew = staffList.slice(0, 4);
 
 	return (
 		<LinearGradient
@@ -219,139 +188,12 @@ export default function LoginScreen({ onAuthenticated }: Props) {
 									AFFO POS
 								</Text>
 							</View>
-
-							<View style={{ marginBottom: 20 }}>
-								<View
-									style={{
-										flexDirection: "row",
-										alignItems: "center",
-										justifyContent: "space-between",
-										marginBottom: 10,
-									}}
-								>
-									<Text
-										style={{
-											fontSize: 10,
-											fontWeight: "700",
-											letterSpacing: 1.2,
-											color: "#94a3b8",
-											textTransform: "uppercase",
-										}}
-									>
-										Quick Switch Crew
-									</Text>
-									{staffList.length > 4 && (
-										<Text
-											style={{
-												fontSize: 11,
-												fontWeight: "600",
-												color: "#0284c7",
-											}}
-										>
-											+{staffList.length - 4} more
-										</Text>
-									)}
-								</View>
-
-								{staffLoading ? (
-									<View
-										style={{
-											height: 72,
-											alignItems: "center",
-											justifyContent: "center",
-										}}
-									>
-										<ActivityIndicator size="small" color="#0284c7" />
-									</View>
-								) : visibleCrew.length === 0 ? (
-									<View
-										style={{
-											height: 72,
-											alignItems: "center",
-											justifyContent: "center",
-											backgroundColor: "#f8fafc",
-											borderRadius: 16,
-											borderWidth: 1,
-											borderColor: "#e2e8f0",
-											borderStyle: "dashed",
-										}}
-									>
-										<Text
-											style={{
-												fontSize: 12,
-												color: "#94a3b8",
-												fontWeight: "500",
-											}}
-										>
-											No active staff found
-										</Text>
-									</View>
-								) : (
-									<View style={{ flexDirection: "row", gap: 8 }}>
-										{visibleCrew.map((user, idx) => {
-											const isSelected = selectedUser?.username === user.username;
-											const palette = getPalette(idx, user.role);
-											const initials = getInitials(user.username);
-											const displayName = getDisplayName(user.username);
-
-											return (
-												<Pressable
-													key={user.username}
-													onPress={() => handleSelectUser(user)}
-													style={{
-														flex: 1,
-														alignItems: "center",
-														paddingVertical: 10,
-														paddingHorizontal: 4,
-														borderRadius: 18,
-														borderWidth: isSelected ? 2 : 1,
-														borderColor: isSelected ? "#0284c7" : "#e2e8f0",
-														backgroundColor: isSelected ? "#f0f9ff" : "#f8fafc",
-													}}
-												>
-													<View
-														style={{
-															width: 40,
-															height: 40,
-															borderRadius: 20,
-															backgroundColor: palette.bg,
-															alignItems: "center",
-															justifyContent: "center",
-															shadowColor: "#0f172a",
-															shadowOpacity: 0.08,
-															shadowRadius: 4,
-															elevation: 2,
-														}}
-													>
-														<Text
-															style={{
-																fontSize: 11,
-																fontWeight: "700",
-																color: palette.text,
-															}}
-														>
-															{initials}
-														</Text>
-													</View>
-													<Text
-														numberOfLines={1}
-														style={{
-															marginTop: 5,
-															fontSize: 11,
-															fontWeight: isSelected ? "700" : "500",
-															color: isSelected ? "#0f172a" : "#64748b",
-															textAlign: "center",
-															width: "100%",
-														}}
-													>
-														{displayName}
-													</Text>
-												</Pressable>
-											);
-										})}
-									</View>
-								)}
-							</View>
+							<QuickSwitchCrew
+								staff={staffList}
+								loading={staffLoading}
+								selectedUsername={selectedUser?.username ?? ""}
+								onSelect={handleSelectUser}
+							/>
 
 							<View style={{ gap: 12 }}>
 								<View>

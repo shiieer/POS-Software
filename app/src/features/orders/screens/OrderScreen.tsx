@@ -1,10 +1,12 @@
-﻿import {
+import {
 	ActivityIndicator,
 	FlatList,
+	Pressable,
 	RefreshControl,
 	Text,
 	View,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import ScreenContainer from "@/shared/components/ScreenContainer";
 import OrderStatusFilter from "../components/OrderStatusFilter";
 import { useOrders } from "../hooks/useOrders";
@@ -24,6 +26,8 @@ export default function OrderScreen({ onOpenOrder }: Props) {
 		counts,
 		metrics,
 		orders,
+		pendingQrisOrders,
+		pendingQrisCount,
 		loading,
 		refreshing,
 		error,
@@ -58,6 +62,34 @@ export default function OrderScreen({ onOpenOrder }: Props) {
 				counts={counts}
 				onSelect={setSelectedFilter}
 			/>
+
+			{pendingQrisCount > 0 ? (
+				<Pressable
+					onPress={() => {
+						if (pendingQrisOrders[0]) {
+							onOpenOrder(pendingQrisOrders[0].id);
+						}
+					}}
+					className="mx-4 mb-2 flex-row items-center justify-between rounded-2xl border border-rose-300 bg-rose-50 p-3 shadow-xs dark:border-rose-800 dark:bg-rose-950/80"
+				>
+					<View className="flex-row items-center gap-2.5 flex-1 pr-2">
+						<View className="h-8 w-8 items-center justify-center rounded-xl bg-rose-500">
+							<Ionicons name="notifications" size={18} color="#FFFFFF" />
+						</View>
+						<View className="flex-1">
+							<Text className="text-xs font-bold text-rose-900 dark:text-rose-100">
+								{pendingQrisCount} Pembayaran QRIS Menunggu Konfirmasi!
+							</Text>
+							<Text className="text-[10px] text-rose-700 dark:text-rose-300">
+								Cek notifikasi masuk bank/GoBiz lalu tap untuk konfirmasi
+							</Text>
+						</View>
+					</View>
+					<View className="rounded-xl bg-rose-600 px-3 py-1.5">
+						<Text className="text-[10px] font-bold text-white">Konfirmasi</Text>
+					</View>
+				</Pressable>
+			) : null}
 
 			{loading ? (
 				<View className="flex-1 items-center justify-center">

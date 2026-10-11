@@ -6,7 +6,7 @@ import { getErrorMessage } from "@/utils";
 
 export function useMenuManagement() {
 	const [items, setItems] = useState<ManagedMenuItem[]>([]);
-	const [selectedCategory, setSelectedCategory] = useState(ALL_ITEMS);
+	const [selectedCategories, setSelectedCategories] = useState<string[]>([ALL_ITEMS]);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [availabilityFilter, setAvailabilityFilter] =
 		useState<AvailabilityFilter>("all");
@@ -51,8 +51,8 @@ export function useMenuManagement() {
 
 		return items.filter((item) => {
 			const matchCategory =
-				selectedCategory === ALL_ITEMS ||
-				item.category === selectedCategory;
+				selectedCategories.includes(ALL_ITEMS) ||
+				selectedCategories.includes(item.category);
 			const matchStock =
 				availabilityFilter === "all" ||
 				(availabilityFilter === "in-stock" && item.isAvailable) ||
@@ -64,16 +64,18 @@ export function useMenuManagement() {
 				(item.description ?? "").toLowerCase().includes(query);
 			return matchCategory && matchStock && matchSearch;
 		});
-	}, [items, selectedCategory, availabilityFilter, searchQuery]);
+	}, [items, selectedCategories, availabilityFilter, searchQuery]);
 
-	const cycleAvailabilityFilter = () => {
-		setAvailabilityFilter((prev) =>
-			prev === "all"
-				? "in-stock"
-				: prev === "in-stock"
-					? "out-of-stock"
-					: "all",
-		);
+	const toggleCategory = (category: string) => {
+		setSelectedCategories((current) => {
+			if (category === ALL_ITEMS) return [ALL_ITEMS];
+
+			const selected = current.filter((item) => item !== ALL_ITEMS);
+			const next = selected.includes(category)
+				? selected.filter((item) => item !== category)
+				: [...selected, category];
+			return next.length ? next : [ALL_ITEMS];
+		});
 	};
 
 	const toggleAvailability = async (item: ManagedMenuItem) => {
@@ -102,12 +104,12 @@ export function useMenuManagement() {
 		stats,
 		categories,
 		existingCategories,
-		selectedCategory,
-		setSelectedCategory,
+		selectedCategories,
+		toggleCategory,
 		searchQuery,
 		setSearchQuery,
 		availabilityFilter,
-		cycleAvailabilityFilter,
+		setAvailabilityFilter,
 		loading,
 		error,
 		refresh: loadMenu,

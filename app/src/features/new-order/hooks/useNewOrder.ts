@@ -9,7 +9,7 @@ import { getCategoriesFromMenu, MapMenuItem } from "../utils/mapMenu";
 export function useNewOrder() {
 	const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
 	const [categories, setCategories] = useState<string[]>([]);
-	const [selectedCategory, setSelectedCategory] = useState(ALL_ITEMS);
+	const [selectedCategories, setSelectedCategories] = useState<string[]>([ALL_ITEMS]);
 	const [cart, setCart] = useState<CartItem[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [submitting, setSubmitting] = useState(false);
@@ -27,7 +27,7 @@ export function useNewOrder() {
 			setMenuItems(mapped);
 			const cats = getCategoriesFromMenu(mapped);
 			setCategories([ALL_ITEMS, ...cats]);
-			setSelectedCategory((prev) => prev || ALL_ITEMS);
+			setSelectedCategories((prev) => prev.length ? prev : [ALL_ITEMS]);
 		} catch (err) {
 			setError(getErrorMessage(err, "Failed to load menu"));
 		} finally {
@@ -41,11 +41,26 @@ export function useNewOrder() {
 
 	const filteredItems = useMemo(
 		() =>
-			selectedCategory === ALL_ITEMS
+			selectedCategories.includes(ALL_ITEMS)
 				? menuItems
-				: menuItems.filter((item) => item.category === selectedCategory),
-		[menuItems, selectedCategory],
+				: menuItems.filter((item) => selectedCategories.includes(item.category)),
+		[menuItems, selectedCategories],
 	);
+
+	const toggleCategory = (category: string) => {
+		setSelectedCategories((current) => {
+			if (category === ALL_ITEMS) return [ALL_ITEMS];
+
+			const selected = current.filter((item) => item !== ALL_ITEMS);
+			const next = selected.includes(category)
+				? selected.filter((item) => item !== category)
+				: [...selected, category];
+			return next.length ? next : [ALL_ITEMS];
+		});
+	};
+	const selectedCategoryLabel = selectedCategories.includes(ALL_ITEMS)
+		? ALL_ITEMS
+		: selectedCategories.join(", ");
 
 	const getItemQuantity = (menuItemId: number) => {
 		return cart.find((c) => c.menuItemId === menuItemId)?.quantity ?? 0;
@@ -141,8 +156,9 @@ export function useNewOrder() {
 
 	return {
 		categories,
-		selectedCategory,
-		setSelectedCategory,
+		selectedCategories,
+		selectedCategoryLabel,
+		toggleCategory,
 		filteredItems,
 		loading,
 		error,

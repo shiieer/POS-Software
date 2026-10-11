@@ -1,4 +1,4 @@
-import { createTableApi, fetchTablesApi } from "@/services/api/table.api";
+import { createTableApi, deleteTableApi, fetchTablesApi, setTableActiveApi } from "@/services/api/table.api";
 import { TableApi } from "@/types/api/table";
 import { getErrorMessage } from "@/utils";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -57,6 +57,24 @@ export function useTables() {
 		}
 	}
 
+	async function removeTable(id: number) {
+		try {
+			await deleteTableApi(id);
+			setTables((prev) => prev.filter((table) => table.id !== id));
+		} catch (err) {
+			throw new Error(getErrorMessage(err, "Failed to delete table"));
+		}
+	}
+
+	async function setTableActive(id: number, isActive: boolean) {
+		try {
+			const updated = await setTableActiveApi(id, isActive);
+			setTables((prev) => prev.map((table) => table.id === id ? updated : table));
+		} catch (err) {
+			throw new Error(getErrorMessage(err, "Failed to update table status"));
+		}
+	}
+
 	return {
 		tables: filtered,
 		counts,
@@ -66,6 +84,8 @@ export function useTables() {
 		saving,
 		error,
 		addTable,
+		removeTable,
+		setTableActive,
 		reload: load,
 	};
 }

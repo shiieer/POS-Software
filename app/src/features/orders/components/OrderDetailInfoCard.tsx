@@ -60,6 +60,32 @@ export default function OrderDetailInfoCard({
 				</Text>
 			</Row>
 
+			<Row label="Payment Method">
+				<View className="rounded-md bg-brand-surface px-2 py-0.5 dark:bg-slate-800">
+					<Text className="text-sm font-semibold uppercase text-brand-dark dark:text-slate-100">
+						{order.paymentMethod === "qris" ? "QRIS" : "Cash (Kasir)"}
+					</Text>
+				</View>
+			</Row>
+
+			<Row label="Payment Status">
+				<Text
+					className={`text-sm font-bold ${
+						order.paymentStatus === "paid"
+							? "text-emerald-600 dark:text-emerald-400"
+							: order.paymentMethod === "qris"
+							? "text-rose-600 dark:text-rose-400"
+							: "text-amber-600 dark:text-amber-400"
+					}`}
+				>
+					{order.paymentStatus === "paid"
+						? "Lunas (Paid)"
+						: order.paymentMethod === "qris"
+						? "Perlu Konfirmasi QRIS"
+						: "Belum Dibayar (Kasir)"}
+				</Text>
+			</Row>
+
 			<View className="my-3 border-t border-brand-border dark:border-slate-800" />
 
 			<Row label="Subtotal">

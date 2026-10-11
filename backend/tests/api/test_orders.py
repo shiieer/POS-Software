@@ -159,3 +159,28 @@ def test_update_order_payment_not_found(client, staff_headers):
     )
 
     assert response.status_code == 404
+
+
+def test_get_order_public_success(client, db_session):
+    menu = create_menu_item_db(db_session)
+    order_id = client.post(
+        "/order", json=create_order_payload(menu.id, quantity=1)
+    ).json()["id"]
+
+    response = client.get(f"/order/public/{order_id}")
+
+    assert response.status_code == 200
+    assert response.json()["id"] == order_id
+
+
+def test_create_order_with_qris_payment_method(client, db_session):
+    menu = create_menu_item_db(db_session)
+    payload = create_order_payload(menu.id, quantity=1)
+    payload["payment_method"] = "qris"
+
+    response = client.post("/order", json=payload)
+
+    assert response.status_code == 201
+    data = response.json()
+    assert data["payment_method"] == "qris"
+    assert data["is_paid"] is False

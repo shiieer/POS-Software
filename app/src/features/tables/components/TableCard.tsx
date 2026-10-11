@@ -5,9 +5,10 @@ import { TableApi } from "@/types/api/table";
 type Props = {
 	table: TableApi;
 	onViewQr: () => void;
+	onManage: () => void;
 };
 
-export default function TableCard({ table, onViewQr }: Props) {
+export default function TableCard({ table, onViewQr, onManage }: Props) {
 	const active = table.is_active;
 
 	return (
@@ -17,57 +18,39 @@ export default function TableCard({ table, onViewQr }: Props) {
 					active ? "bg-[#0284C7]" : "bg-[#F87171]"
 				}`}
 			/>
-
-			<View className="mt-1 items-center">
+			<Pressable
+				onPress={onManage}
+				onLongPress={onManage}
+				delayLongPress={350}
+				accessibilityRole="button"
+				accessibilityLabel={`${table.name}. Tap or press and hold for table actions`}
+				className="mt-1 items-center"
+			>
 				<View
 					className={`mb-3 h-14 w-14 items-center justify-center rounded-2xl ${
 						active ? "bg-[#F0F3FF]" : "bg-[#FFDADB]/50"
 					}`}
 				>
-					<Ionicons
-						name="grid"
-						size={28}
-						color={active ? "#0284C7" : "#B90538"}
-					/>
+					<Ionicons name="grid" size={28} color={active ? "#0284C7" : "#B90538"} />
 				</View>
-				<Text className="text-center text-base font-bold text-[#111C2D]">
-					{table.name}
-				</Text>
-				<View
-					className={`mt-1.5 rounded-full px-2.5 py-0.5 ${
-						active ? "bg-[#E0F2FE]" : "bg-[#FFE4E6]"
-					}`}
-				>
-					<Text
-						className={`text-[11px] font-bold tracking-wide ${
-							active ? "text-[#0284C7]" : "text-[#BE123C]"
-						}`}
-					>
+				<Text className="text-center text-base font-bold text-[#111C2D]">{table.name}</Text>
+				<View className={`mt-1.5 rounded-full px-2.5 py-0.5 ${active ? "bg-[#E0F2FE]" : "bg-[#FFE4E6]"}`}>
+					<Text className={`text-[11px] font-bold tracking-wide ${active ? "text-[#0284C7]" : "text-[#BE123C]"}`}>
 						{active ? "ACTIVE" : "INACTIVE"}
 					</Text>
 				</View>
-				<Pressable
-					onPress={onViewQr}
-					className={`mt-4 w-full flex-row items-center justify-center gap-1.5 rounded-xl border py-2 ${
-						active
-							? "border-[#0284C7]/20 bg-[#F0F3FF]"
-							: "border-[#BFC7D2]/40 bg-[#F0F3FF]"
-					}`}
-				>
-					<Ionicons
-						name="qr-code-outline"
-						size={17}
-						color={active ? "#0284C7" : "#3F4850"}
-					/>
-					<Text
-						className={`text-xs font-bold ${
-							active ? "text-[#0284C7]" : "text-[#3F4850]"
-						}`}
-					>
-						View QR
-					</Text>
-				</Pressable>
-			</View>
+			</Pressable>
+			<Pressable
+				onPress={onViewQr}
+				className={`mt-4 w-full flex-row items-center justify-center gap-1.5 rounded-xl border py-2 ${
+					active ? "border-[#0284C7]/20 bg-[#F0F3FF]" : "border-[#BFC7D2]/40 bg-[#F0F3FF]"
+				}`}
+			>
+				<Ionicons name="qr-code-outline" size={17} color={active ? "#0284C7" : "#3F4850"} />
+				<Text className={`text-xs font-bold ${active ? "text-[#0284C7]" : "text-[#3F4850]"}`}>
+					View QR
+				</Text>
+			</Pressable>
 		</View>
 	);
 }

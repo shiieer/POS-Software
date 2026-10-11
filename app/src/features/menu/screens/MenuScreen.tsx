@@ -30,12 +30,12 @@ export default function MenuScreen({
 		items,
 		stats,
 		categories,
-		selectedCategory,
-		setSelectedCategory,
+		selectedCategories,
+		toggleCategory,
 		searchQuery,
 		setSearchQuery,
 		availabilityFilter,
-		cycleAvailabilityFilter,
+		setAvailabilityFilter,
 		loading,
 		error,
 		toggleAvailability,
@@ -45,14 +45,14 @@ export default function MenuScreen({
 		<ScreenContainer>
 			<MenuManagementHeader
 				availabilityFilter={availabilityFilter}
-				onPressFilter={cycleAvailabilityFilter}
+				onSelectFilter={setAvailabilityFilter}
 				onAddItem={onAddItem}
 			/>
 
 			<MenuCategoryFilter
 				categories={categories}
-				selected={selectedCategory}
-				onSelect={setSelectedCategory}
+				selected={selectedCategories}
+				onSelect={toggleCategory}
 				allCount={stats.total}
 			/>
 

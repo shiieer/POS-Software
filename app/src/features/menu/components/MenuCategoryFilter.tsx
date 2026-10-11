@@ -3,7 +3,7 @@ import { ALL_ITEMS } from "../types/menu";
 
 type Props = {
 	categories: string[];
-	selected: string;
+	selected: string[];
 	onSelect: (category: string) => void;
 	allCount: number;
 };
@@ -22,7 +22,7 @@ export default function MenuCategoryFilter({
 			contentContainerClassName="gap-2 px-4 py-2"
 		>
 			{categories.map((category) => {
-				const isActive = category === selected;
+				const isActive = selected.includes(category);
 				const label =
 					category === ALL_ITEMS
 						? `All Items (${allCount})`

@@ -9,6 +9,8 @@ os.environ.setdefault("SUPABASE_URL", "https://fake.supabase.co")
 os.environ.setdefault("SUPABASE_SERVICE_KEY", "fake-service-key")
 os.environ.setdefault("SUPABASE_MENU_BUCKET", "menu_images")
 os.environ.setdefault("SUPABASE_QR_BUCKET", "qr_codes")
+os.environ.setdefault("SUPABASE_QRIS_BUCKET", "qris")
+os.environ.setdefault("SUPABASE_QRIS", "qris")
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -131,5 +133,6 @@ def mock_supabase_storage(monkeypatch):
     monkeypatch.setattr("app.core.qr.upload_bytes", fake_upload_bytes)
     monkeypatch.setattr("app.routers.menu.upload_bytes", fake_upload_bytes)
     monkeypatch.setattr("app.routers.menu.delete_file", fake_delete_file)
+    monkeypatch.setattr("app.routers.settings.upload_bytes", fake_upload_bytes)
 
     return {"uploaded": uploaded, "deleted": deleted}

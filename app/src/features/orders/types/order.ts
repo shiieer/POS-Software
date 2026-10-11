@@ -1,8 +1,10 @@
-export type OrderFilter = "All" | "New" | "Preparing" | "Ready" | "Served";
+export type OrderFilter = "All" | "New" | "Preparing" | "Ready" | "Served" | "Canceled";
 
 export type OrderStatus = "new" | "preparing" | "ready" | "served" | "cancelled";
 
 export type PaymentStatus = "paid" | "unpaid";
+
+export type PaymentMethodType = "cash" | "qris" | "other";
 
 export type OrderLocationType = "table" | "to-go";
 
@@ -23,6 +25,7 @@ export type Order = {
 	tag?: string;
 	status: OrderStatus;
 	paymentStatus: PaymentStatus;
+	paymentMethod: PaymentMethodType;
 	locationType: OrderLocationType;
 	locationLabel: string;
 	elapsedSeconds: number;
@@ -39,7 +42,4 @@ export type OrderFilterCounts = Record<OrderFilter, number>;
 export type ShiftMetrics = {
 	inQueue: number;
 	newCount: number;
-	avgMinutes: number;
-	revenue: number;
-	paidRate: number;
 };

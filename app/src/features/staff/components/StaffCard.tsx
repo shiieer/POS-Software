@@ -1,25 +1,12 @@
 import { UserApi } from "@/types/api/user";
 import { Text, View } from "react-native";
 import AvailabilitySwitch from "@/features/menu/components/AvailabilitySwitch";
+import { getDisplayName, getInitials } from "@/features/profile/utils/profileFormat";
 
 type Props = {
 	user: UserApi;
 	onToggleActive?: (value: boolean) => void;
 };
-
-function initials(username: string) {
-	const parts = username.replace(/[._-]/g, " ").trim().split(/\s+/);
-	if (parts.length >= 2) {
-		return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-	}
-	return username.slice(0, 2).toUpperCase();
-}
-
-function displayName(username: string) {
-	return username
-		.replace(/[._-]/g, " ")
-		.replace(/\b\w/g, (char) => char.toUpperCase());
-}
 
 export default function StaffCard({ user, onToggleActive }: Props) {
 	const isAdmin = user.role === "admin";
@@ -58,7 +45,7 @@ export default function StaffCard({ user, onToggleActive }: Props) {
 									: "text-[#0284C7]"
 						}`}
 					>
-						{initials(user.username)}
+						{getInitials(user.username)}
 					</Text>
 				</View>
 
@@ -69,7 +56,7 @@ export default function StaffCard({ user, onToggleActive }: Props) {
 								active ? "text-slate-900" : "text-slate-700"
 							}`}
 						>
-							{displayName(user.username)}
+							{getDisplayName(user.username)}
 						</Text>
 						<View
 							className={`flex-row items-center gap-1 rounded-full px-2 py-0.5 ${

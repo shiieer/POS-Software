@@ -1,38 +1,67 @@
 # AFFO POS
 
-Point-of-sale system for cafes and restaurants. Includes:
-- **FastAPI** backend for auth, menu, tables, orders, and sales reports.
-- **Expo (React Native)** staff app for managing orders, tables, and POS operations.
-- **React + Vite + Tailwind CSS** customer self-ordering web app accessible via table QR codes.
+A full-stack point-of-sale system for cafes and restaurants, built across three separate apps that work together:
+
+- **FastAPI** backend — auth, menu, tables, orders, staff management, and sales reports
+- **Expo (React Native)** staff POS app — order board, table management, menu CRUD, and more
+- **React + Vite** customer web app — mobile self-ordering via table QR codes
 
 ---
 
 ## Project Structure
 
 ```
-pos_affo/
-├── .gitignore
+pos_software/
 ├── README.md
-├── backend/                  # FastAPI REST API
-│   ├── app/                  # Application code (routers, models, schemas, services)
-│   ├── tests/                # Pytest suite
-│   ├── requirements.txt      # Runtime Python dependencies
-│   ├── requirements-test.txt # Test dependencies
-│   ├── run.py                # Entrypoint (binds to 0.0.0.0:8000)
-│   └── .env.example          # Environment template
-├── app/                      # Expo mobile app (Staff POS)
-│   ├── src/                  # Screens, components, services
+├── .gitignore
+│
+├── backend/                        # FastAPI REST API
+│   ├── app/
+│   │   ├── core/                   # QR generation, storage, security
+│   │   ├── models/                 # SQLAlchemy ORM models
+│   │   ├── routers/                # auth, menu, tables, orders, reports, staff, settings
+│   │   ├── schemas/                # Pydantic request/response models
+│   │   ├── services/               # Business logic layer
+│   │   ├── config.py               # Settings (loaded from .env)
+│   │   ├── database.py             # DB session setup
+│   │   ├── dependencies.py         # FastAPI dependency injection
+│   │   └── main.py                 # App factory, CORS, router registration
+│   ├── tests/                      # pytest suite
+│   ├── requirements.txt
+│   ├── requirements-test.txt
+│   ├── run.py                      # Entrypoint (0.0.0.0:8000)
+│   └── .env.example
+│
+├── app/                            # Expo staff POS app (React Native)
+│   ├── src/
+│   │   ├── features/
+│   │   │   ├── auth/               # Login screen & token management
+│   │   │   ├── new-order/          # POS checkout flow
+│   │   │   ├── orders/             # Order management board
+│   │   │   ├── tables/             # Table management & QR viewer
+│   │   │   ├── menu/               # Menu CRUD
+│   │   │   ├── reports/            # Sales reports
+│   │   │   ├── staff/              # Staff management
+│   │   │   ├── profile/            # Profile settings
+│   │   │   └── more/               # More / settings hub
+│   │   ├── shared/                 # Shared UI components & hooks
+│   │   ├── services/               # API service layer
+│   │   ├── types/                  # TypeScript types
+│   │   └── constants/              # App-wide constants
 │   ├── package.json
 │   └── .env.example
-└── web/                      # Customer ordering web app (Mobile web)
+│
+└── web/                            # Customer self-ordering web app
     ├── src/
-    │   ├── api/              # API client (dynamic host detection)
-    │   ├── components/       # UI components (Header, MenuList, CartBar, Modals)
-    │   ├── hooks/            # useCart, useMenu, useTable, useLocalStorage
-    │   └── types/            # TypeScript interfaces
-    ├── package.json
-    ├── vite.config.ts        # Vite + Tailwind v4 with network exposure
-    └── index.html
+    │   ├── api/                    # API client (dynamic LAN host detection)
+    │   ├── components/             # Header, MenuList, CartBar, CheckoutModal,
+    │   │                           # OrderStatusDrawer, OrderSuccess, and more
+    │   ├── hooks/                  # useCart, useMenu, useTable, useOrderStatus,
+    │   │                           # useQrisSettings, useLocalStorage
+    │   ├── types/                  # TypeScript interfaces
+    │   └── utils/                  # formatCurrency
+    ├── vite.config.ts              # Vite + Tailwind v4, host: true for LAN access
+    └── .env.example
 ```
 
 ---
@@ -40,122 +69,147 @@ pos_affo/
 ## Features
 
 ### Backend (FastAPI)
-- JWT authentication (admin & staff roles)
-- Menu CRUD with image upload (Supabase Storage)
-- Table management with QR code generation
-- Public QR table token verification (`GET /tables/verify`)
-- Customer order creation & staff order lifecycle (`pending` → `preparing` → `ready` → `served`)
-- Sales reports with date filters
-- Interactive API documentation at `/docs`
+- JWT authentication with admin and staff role separation
+- Full menu CRUD with image upload via Supabase Storage
+- Table management — create tables, generate QR codes, toggle active/inactive
+- QR token verification endpoint for customer web app (`GET /tables/verify`)
+- Customer order creation (public, no auth)
+- Staff order lifecycle: `pending` → `confirmed` → `processing` → `ready` → `completed`
+- QRIS payment confirmation workflow
+- Staff management (admin only)
+- Sales reports with date range filters
+- QRIS merchant settings (image + merchant name)
+- Swagger UI at `/docs`
 
 ### Customer Web App (`web/`)
-- Mobile-first, lightweight React + Vite + Tailwind CSS v4 stack
-- Table detection via QR code parameters (`?table=:id&token=:token`)
-- QR verification against backend before showing menu
-- Dynamic category navigation & instant filtering
-- Item counter on menu cards (increase / decrease directly)
-- Persistent cart state across refreshes (scoped per table via `localStorage`)
-- Order confirmation modal with optional customer name & special notes
-- Automatic LAN IP detection for seamless mobile phone testing
+- Mobile-first UI with full device width layout
+- QR code scanning flow — reads `?table=` and `?token=` from URL, verifies with backend
+- Category tabs with smooth horizontal scrolling
+- Item quantity stepper directly on menu cards
+- Cart state persisted in `localStorage` per table
+- Checkout modal with optional customer name, order notes, and payment method selection (Cash / QRIS)
+- Live order status tracking — notification bell in header polls the backend every 4 seconds
+- Bell badge lights up on status changes (pending → confirmed → processing → ready)
+- Order status drawer — slide up from bell, drag down to dismiss
+- QRIS payment confirmation banner when cashier confirms payment
+- Automatic LAN IP detection so phones on the same Wi-Fi can reach the backend without manual config
 
 ### Staff Mobile App (`app/`)
-- Staff login with secure token storage
-- Order management board with status filters
-- POS checkout & cash/QRIS payment marking
-- Menu and sales reporting views
+- Secure login with JWT stored in device keychain
+- New order POS screen with menu search and cart
+- Order management board with status filters and real-time refresh
+- Table management — add/remove tables, view & download QR codes, toggle active state
+- Menu management — add/edit items with image picker and category assignment
+- Sales reports with charts
+- Staff management (admin only)
+- Profile and store settings
 
 ---
 
 ## Prerequisites
 
-| Tool | Version |
-|------|---------|
-| Python | 3.11+ |
-| Node.js | 18+ (v22 recommended) |
-| npm | 9+ |
-| Supabase Account | For menu images & QR code storage |
-| Expo Go | For running the staff mobile app |
+| Tool | Minimum version |
+|------|----------------|
+| Python | 3.11 |
+| Node.js | 18 (22 recommended) |
+| npm | 9 |
+| Expo Go | Latest (for staff app on device) |
+| Supabase project | For image & QR storage |
 
 ---
 
 ## Quick Start
 
-### 1. Backend Setup
+### 1. Backend
 
 ```bash
 cd backend
+
+# Create and activate a virtual environment
 python -m venv venv
-```
+venv\Scripts\Activate.ps1        # Windows PowerShell
+# source venv/bin/activate        # macOS / Linux
 
-**Activate environment:**
-- Windows (PowerShell): `venv\Scripts\Activate.ps1`
-- macOS / Linux: `source venv/bin/activate`
-
-**Install dependencies:**
-```bash
 pip install -r requirements.txt
+
+# Copy and fill in the environment file
+copy .env.example .env
 ```
 
-**Configure `.env`:**
-```bash
-copy .env.example .env   # Windows
-cp .env.example .env     # macOS / Linux
-```
+`backend/.env` reference:
 
-Update your `backend/.env`:
 ```env
-SECRET_KEY=your-secret-key
+SECRET_KEY=your-long-random-secret
 DATABASE_URL=sqlite:///./data/pos.db
 ADMIN_USERNAME=admin
-ADMIN_PASSWORD=your-admin-password
-CUSTOMER_WEB_URL=http://YOUR_LOCAL_IP:5173
+ADMIN_PASSWORD=your-password
+CUSTOMER_WEB_URL=http://localhost:5173
 
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_KEY=your-service-role-key
 SUPABASE_MENU_BUCKET=menu_images
 SUPABASE_QR_BUCKET=qr_codes
+SUPABASE_QRIS_BUCKET=qris
 ```
 
-**Run the backend:**
+> `CUSTOMER_WEB_URL` is used to build QR code URLs. Leave it as `localhost:5173` for development — the backend automatically substitutes the real LAN IP when generating QR codes so phones can scan them.
+
 ```bash
 python run.py
+# API available at http://localhost:8000
+# Swagger UI at  http://localhost:8000/docs
 ```
-*Listens on `http://0.0.0.0:8000` (Swagger UI at `http://localhost:8000/docs`).*
 
 ---
 
-### 2. Customer Web App Setup (`web/`)
+### 2. Customer Web App (`web/`)
 
 ```bash
 cd web
 npm install
+cp .env.example .env   # or: copy .env.example .env on Windows
 npm run dev
 ```
 
-Vite will run with network exposure:
-```
-  ➜  Local:   http://localhost:5173/
-  ➜  Network: http://YOUR_LOCAL_IP:5173/
+`web/.env` reference:
+
+```env
+VITE_API_URL=http://localhost:8000
 ```
 
-**Testing QR Ordering on Phone:**
-1. Connect your phone to the same Wi-Fi network as your computer.
-2. Open the URL or scan the table QR code:
-   ```
-   http://YOUR_LOCAL_IP:5173/?table=1&token=TABLE_QR_TOKEN
-   ```
+> The app auto-replaces `localhost` with `window.location.hostname` at runtime, so phones on the same Wi-Fi automatically reach the backend.
+
+Vite starts with network exposure:
+```
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: http://YOUR_LAN_IP:5173/
+```
 
 ---
 
-### 3. Staff Mobile App Setup (`app/`)
+### 3. Staff Mobile App (`app/`)
 
 ```bash
 cd app
 npm install
+cp .env.example .env   # set EXPO_PUBLIC_API_URL=http://YOUR_LAN_IP:8000
 npm start
 ```
 
-Press `a` for Android, `i` for iOS simulator, or scan the QR code with Expo Go.
+Press `a` for Android emulator, `i` for iOS simulator, or scan the Expo QR code with Expo Go on your phone.
+
+---
+
+## Testing QR Ordering End-to-End
+
+1. Start both the backend and the web app.
+2. Open the staff app (or Expo dev build) on your computer or phone.
+3. Go to **Table Management** and create a table if none exist.
+4. Tap a table card → **View QR** to open the QR image.
+5. Scan the QR with your phone's camera — it opens the customer web app with the correct `?table=` and `?token=` params.
+6. Browse the menu, add items, and place an order.
+7. Back in the staff app, the order appears in the **Orders** board.
+8. As the cashier updates the order status, the customer's notification bell badge updates automatically.
 
 ---
 
@@ -163,21 +217,31 @@ Press `a` for Android, `i` for iOS simulator, or scan the QR code with Expo Go.
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| POST | `/auth/login` | Public | Login, returns JWT |
-| GET | `/auth/me` | User | Current user profile |
-| GET | `/menu` | Public | List available menu items |
-| POST | `/menu` | Admin | Create menu item |
-| POST | `/menu/{id}/image` | Admin | Upload menu image |
-| DELETE | `/menu/{id}/image` | Admin | Remove menu image |
-| GET | `/tables/verify` | Public | Verify table ID and QR token |
-| GET | `/tables` | Admin | List all tables |
-| POST | `/tables` | Admin | Create table & generate QR |
-| GET | `/tables/{id}/qr` | Admin | Redirect to table QR image |
-| POST | `/order` | Public | Submit customer order |
-| GET | `/order` | Staff | List active orders |
-| PATCH | `/order/{id}/status` | Staff | Update order status |
-| PATCH | `/order/{id}/payment` | Staff | Mark order paid |
-| GET | `/reports/sales` | Admin | Sales report summary |
+| `POST` | `/auth/login` | Public | Login, returns JWT |
+| `GET` | `/auth/me` | User | Current user info |
+| `GET` | `/menu` | Public | List available menu items |
+| `POST` | `/menu` | Admin | Create menu item |
+| `PATCH` | `/menu/{id}` | Admin | Update menu item |
+| `DELETE` | `/menu/{id}` | Admin | Delete menu item |
+| `POST` | `/menu/{id}/image` | Admin | Upload item image |
+| `DELETE` | `/menu/{id}/image` | Admin | Remove item image |
+| `GET` | `/tables/verify` | Public | Verify table QR token |
+| `GET` | `/tables` | Admin | List all tables |
+| `POST` | `/tables` | Admin | Create table & generate QR |
+| `PATCH` | `/tables/{id}/active` | Admin | Toggle table active state |
+| `DELETE` | `/tables/{id}` | Admin | Delete table |
+| `GET` | `/tables/{id}/qr` | Admin | Get table QR image (PNG) |
+| `POST` | `/order` | Public | Submit customer order |
+| `GET` | `/order` | Staff | List orders (with filters) |
+| `GET` | `/order/public/{id}` | Public | Get order status (for polling) |
+| `PATCH` | `/order/{id}/status` | Staff | Update order status |
+| `PATCH` | `/order/{id}/payment` | Staff | Mark order as paid |
+| `GET` | `/reports/sales` | Admin | Sales report with date filters |
+| `GET` | `/staff` | Admin | List staff |
+| `POST` | `/staff` | Admin | Create staff account |
+| `DELETE` | `/staff/{id}` | Admin | Remove staff |
+| `GET` | `/settings/qris` | Public | Get QRIS merchant settings |
+| `PUT` | `/settings/qris` | Admin | Update QRIS settings |
 
 ---
 
@@ -185,8 +249,40 @@ Press `a` for Android, `i` for iOS simulator, or scan the QR code with Expo Go.
 
 | Layer | Technologies |
 |-------|--------------|
-| **Backend** | FastAPI, SQLAlchemy, SQLite, Pydantic, Uvicorn |
-| **Customer Web** | React 19, Vite, Tailwind CSS v4, React Router |
+| **Backend** | FastAPI, SQLAlchemy, SQLite / PostgreSQL, Pydantic v2, Uvicorn |
+| **Customer Web** | React 19, Vite 8, Tailwind CSS v4, React Router v7 |
 | **Staff Mobile** | React Native, Expo, NativeWind, Axios |
-| **Cloud Storage** | Supabase Storage (images & QR codes) |
+| **Storage** | Supabase Storage (menu images, QR codes, QRIS image) |
 | **Testing** | pytest, httpx, pytest-cov |
+
+---
+
+## Environment Files
+
+| File | Purpose |
+|------|---------|
+| `backend/.env` | Backend secrets and config — **never commit** |
+| `backend/.env.example` | Template — safe to commit |
+| `app/.env` | Expo API URL — **never commit** |
+| `app/.env.example` | Template — safe to commit |
+| `web/.env` | Vite API URL — **never commit** |
+| `web/.env.example` | Template — safe to commit |
+
+---
+
+## Production Deployment
+
+Set stable HTTPS URLs in each service's environment:
+
+```env
+# backend/.env
+CUSTOMER_WEB_URL=https://order.yourdomain.com
+
+# web/.env
+VITE_API_URL=https://api.yourdomain.com
+
+# app/.env
+EXPO_PUBLIC_API_URL=https://api.yourdomain.com
+```
+
+The LAN auto-detection only activates when the configured host is a private/local address. Production HTTPS URLs are used as-is.

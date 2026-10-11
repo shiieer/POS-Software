@@ -57,8 +57,12 @@ export function useCart(tableId: number | null) {
   );
 
   const submitOrder = useCallback(
-    async (customerName?: string, notes?: string) => {
-      if (items.length === 0) return;
+    async (
+      customerName?: string,
+      notes?: string,
+      paymentMethod: import("../types").PaymentMethod = "cash",
+    ) => {
+      if (items.length === 0) return null;
       setSubmitting(true);
       setError(null);
 
@@ -67,6 +71,7 @@ export function useCart(tableId: number | null) {
           table_id: tableId,
           customer_name: customerName || null,
           notes: notes || null,
+          payment_method: paymentMethod,
           items: items.map((i) => ({
             menu_item_id: i.menuItem.id,
             quantity: i.quantity,
@@ -75,8 +80,10 @@ export function useCart(tableId: number | null) {
         });
         setOrderResult(result);
         clearStorage();
+        return result;
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to submit order");
+        return null;
       } finally {
         setSubmitting(false);
       }

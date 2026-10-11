@@ -15,8 +15,9 @@ import { useOrientationLayout } from "@/shared/hooks/useOrientationLayout";
 export default function NewOrderScreen() {
 	const {
 		categories,
-		selectedCategory,
-		setSelectedCategory,
+		selectedCategories,
+		selectedCategoryLabel,
+		toggleCategory,
 		filteredItems,
 		loading,
 		error,
@@ -61,8 +62,8 @@ export default function NewOrderScreen() {
 		});
 	};
 
-	const railWidth = isLandscape ? 96 : 0;
-	const sidebarWidth = isLandscape ? 320 : 0;
+	const railWidth = isLandscape ? 200 : 0;
+	const sidebarWidth = isLandscape ? 336 : 0;
 	const catalogWidth = Math.max(280, width - railWidth - sidebarWidth);
 
 	const cartActions = {
@@ -81,12 +82,12 @@ export default function NewOrderScreen() {
 		<View className="min-w-0 flex-1">
 			<CategoryFilter
 				categories={categories}
-				selected={selectedCategory}
-				onSelect={setSelectedCategory}
+				selected={selectedCategories}
+				onSelect={toggleCategory}
 			/>
 			<ProductGrid
 				items={filteredItems}
-				categoryLabel={selectedCategory}
+				categoryLabel={selectedCategoryLabel}
 				contentWidth={catalogWidth}
 				bottomInset={isLandscape ? 24 : cartCount > 0 ? 8 : 24}
 				getItemQuantity={getItemQuantity}

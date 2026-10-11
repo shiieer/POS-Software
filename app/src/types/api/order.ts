@@ -22,7 +22,8 @@ export type OrderApi = {
 	customer_name: string | null;
 	status: ApiOrderStatus;
 	is_paid: boolean;
-	paymeny_method: string | null;
+	payment_method?: "cash" | "qris" | "other" | null;
+	paymeny_method?: string | null;
 	notes: string | null;
 	total_amount: number;
 	created_at: string;

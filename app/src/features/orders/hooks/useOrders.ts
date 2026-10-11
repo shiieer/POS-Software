@@ -1,8 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ORDER_FILTERS } from "../constants/filters";
 import { Order, OrderFilter, ShiftMetrics } from "../types/order";
-import { fetchOrdersApi, updateOrderStatusApi } from "@/services/api/order.api";
-import { getElapsedSeconds, getErrorMessage } from "@/utils";
+import {
+	fetchOrdersApi,
+	updateOrderPaymentApi,
+	updateOrderStatusApi,
+} from "@/services/api/order.api";
+import { getErrorMessage } from "@/utils";
 import { countOrdersByFilter, filterOrders, mapOrder } from "../utils/mapOrder";
 
 export function useOrders() {
@@ -37,6 +41,13 @@ export function useOrders() {
 		loadOrders();
 	}, [loadOrders]);
 
+	useEffect(() => {
+		const pollInterval = setInterval(() => {
+			loadOrders(true);
+		}, 6000);
+		return () => clearInterval(pollInterval);
+	}, [loadOrders]);
+
 	const visibleOrders = useMemo(
 		() => filterOrders(orders, selectedFilter),
 		[orders, selectedFilter],
@@ -49,25 +60,9 @@ export function useOrders() {
 			(order) =>
 				order.status !== "cancelled" && order.status !== "served",
 		);
-		const billed = orders.filter((order) => order.status !== "cancelled");
-		const served = orders.filter((order) => order.status === "served");
-		const paid = billed.filter((order) => order.paymentStatus === "paid");
-		const speedSource = served.length ? served : active;
-		const avgSeconds = speedSource.length
-			? speedSource.reduce(
-					(sum, order) => sum + getElapsedSeconds(order.createdAt),
-					0,
-				) / speedSource.length
-			: 0;
-
 		return {
 			inQueue: active.length,
 			newCount: active.filter((order) => order.status === "new").length,
-			avgMinutes: avgSeconds / 60,
-			revenue: paid.reduce((sum, order) => sum + order.totalAmount, 0),
-			paidRate: billed.length
-				? Math.round((paid.length / billed.length) * 100)
-				: 0,
 		};
 	}, [orders]);
 
@@ -90,6 +85,28 @@ export function useOrders() {
 		console.log("Print order:", orderId);
 	};
 
+	const pendingQrisOrders = useMemo(
+		() =>
+			orders.filter(
+				(o) =>
+					o.paymentMethod === "qris" &&
+					o.paymentStatus === "unpaid" &&
+					o.status !== "cancelled",
+			),
+		[orders],
+	);
+
+	const confirmPayment = async (
+		orderId: number,
+		method: "cash" | "qris" = "qris",
+	) => {
+		await updateOrderPaymentApi(orderId, {
+			payment_method: method,
+			is_paid: true,
+		});
+		await loadOrders(true);
+	};
+
 	return {
 		filters: ORDER_FILTERS,
 		selectedFilter,
@@ -97,6 +114,8 @@ export function useOrders() {
 		counts,
 		metrics,
 		orders: visibleOrders,
+		pendingQrisOrders,
+		pendingQrisCount: pendingQrisOrders.length,
 		loading,
 		refreshing,
 		error,
@@ -104,6 +123,7 @@ export function useOrders() {
 		startPreparing,
 		markReady,
 		markServed,
+		confirmPayment,
 		printOrder,
 	};
 }

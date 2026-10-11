@@ -41,7 +41,7 @@ def _load_order(db: Session, order_id: int) -> Order | None:
         db.query(Order)
         .options(
             joinedload(Order.items).joinedload(OrderItem.menu_item),
-            joinedload(Order.table)
+            joinedload(Order.table),
         )
         .filter(Order.id == order_id)
         .first()
@@ -69,6 +69,8 @@ def create_order(db: Session, payload: OrderCreate) -> OrderOut:
         table_id=payload.table_id,
         customer_name=payload.customer_name,
         notes=payload.notes,
+        payment_method=payload.payment_method or PaymentMethod.CASH,
+        is_paid=False,
         status=OrderStatus.PENDING,
     )
 
@@ -76,7 +78,9 @@ def create_order(db: Session, payload: OrderCreate) -> OrderOut:
     for item in payload.items:
         menu_item = menu_map[item.menu_item_id]
         if not menu_item.is_available:
-            raise HTTPException(status_code=400, detail=f"Menu item '{menu_item.name}' is unavailable")
+            raise HTTPException(
+                status_code=400, detail=f"Menu item '{menu_item.name}' is unavailable"
+            )
         subtotal = menu_item.price * item.quantity
         total += subtotal
         order.items.append(
@@ -98,15 +102,15 @@ def create_order(db: Session, payload: OrderCreate) -> OrderOut:
 
 
 def list_orders(
-        db: Session,
-        status_filter: OrderStatus | None = None,
-        active_only: bool = True,
+    db: Session,
+    status_filter: OrderStatus | None = None,
+    active_only: bool = True,
 ) -> list[OrderOut]:
     query = (
         db.query(Order)
         .options(
             joinedload(Order.items).joinedload(OrderItem.menu_item),
-            joinedload(Order.table)
+            joinedload(Order.table),
         )
         .order_by(Order.created_at.desc())
     )
@@ -114,7 +118,9 @@ def list_orders(
     if status_filter:
         query = query.filter(Order.status == status_filter)
     elif active_only:
-        query = query.filter(Order.status.notin_([OrderStatus.SERVED, OrderStatus.CANCELLED]))
+        query = query.filter(
+            Order.status.notin_([OrderStatus.SERVED, OrderStatus.CANCELLED])
+        )
 
     return [_serialize_order(o) for o in query.all()]
 
@@ -127,10 +133,10 @@ def get_order(db: Session, order_id: int) -> OrderOut:
 
 
 def update_order_status(
-        db: Session,
-        order_id: int,
-        status: OrderStatus,
-        current_user: User,
+    db: Session,
+    order_id: int,
+    status: OrderStatus,
+    current_user: User,
 ) -> OrderOut:
     order = db.query(Order).filter(Order.id == order_id).first()
     if not order:
@@ -145,11 +151,11 @@ def update_order_status(
 
 
 def updated_order_payment(
-        db: Session,
-        order_id: int,
-        payment_method: PaymentMethod,
-        is_paid: bool,
-        current_user: User,
+    db: Session,
+    order_id: int,
+    payment_method: PaymentMethod,
+    is_paid: bool,
+    current_user: User,
 ) -> OrderOut:
     order = db.query(Order).filter(Order.id == order_id).first()
     if not order:

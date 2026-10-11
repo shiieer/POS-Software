@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { View, Text, Pressable, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { getElapsedSeconds } from "@/utils";
@@ -112,9 +112,21 @@ export default function OrderCard({
 							iconColor={theme.timerIcon}
 							urgent={theme.timerUrgent}
 						/>
-						<OrderStatusBadge status={order.paymentStatus} />
+						<OrderStatusBadge
+							status={order.paymentStatus}
+							paymentMethod={order.paymentMethod}
+						/>
 					</View>
 				</View>
+
+				{order.paymentMethod === "qris" && order.paymentStatus === "unpaid" ? (
+					<View className="mb-2 flex-row items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-2.5 py-1.5 dark:border-rose-900/60 dark:bg-rose-950/60">
+						<Ionicons name="alert-circle" size={14} color="#E11D48" />
+						<Text className="text-[11px] font-bold text-rose-700 dark:text-rose-300">
+							Konfirmasi QRIS Diperlukan (Cek Notif Bank/GoBiz)
+						</Text>
+					</View>
+				) : null}
 
 				{isLandscape ? (
 					<ScrollView

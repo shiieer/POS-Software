@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 
-export type MoreDestination = "tables" | "staff" | "profile" | "reports";
+export type MoreDestination = "tables" | "staff" | "profile" | "reports" | "qris" | "settings";
 
 export type MoreItem = {
 	key: string;

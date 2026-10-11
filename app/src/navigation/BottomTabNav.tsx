@@ -37,9 +37,9 @@ export default function BottomTabNav() {
 			screenOptions={{
 				headerShown: false,
 				tabBarStyle: {
-					height: 64,
+					height: 76,
 					paddingTop: 6,
-					paddingBottom: 8,
+					paddingBottom: 10,
 					backgroundColor: "rgba(255,255,255,0.95)",
 					borderTopColor: "rgba(191,199,210,0.8)",
 					elevation: 8,
@@ -53,7 +53,7 @@ export default function BottomTabNav() {
 				tabBarLabelStyle: {
 					fontSize: 11,
 					fontWeight: "600",
-					marginTop: 2,
+					marginTop: 0,
 				},
 			}}
 		>

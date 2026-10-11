@@ -1,7 +1,19 @@
-import { View, Text, Pressable } from "react-native";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useEffect, useState } from "react";
+import { View, Text } from "react-native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { fetchQrisSettingApi } from "@/services/api/settings.api";
 
 export default function AppHeader() {
+	const [merchantName, setMerchantName] = useState("POS System");
+
+	useEffect(() => {
+		fetchQrisSettingApi()
+			.then((setting) => {
+				if (setting.merchant_name?.trim()) setMerchantName(setting.merchant_name.trim());
+			})
+			.catch(() => undefined);
+	}, []);
+
 	return (
 		<View className="h-14 flex-row items-center justify-between border-b border-[#D8E3FB]/80 bg-white px-4 shadow-sm">
 			<View className="flex-row items-center gap-3">
@@ -10,7 +22,7 @@ export default function AppHeader() {
 				</View>
 				<View className="flex-row items-center">
 					<Text className="text-base font-bold tracking-tight text-[#006194]">
-						Kedai Affo
+						{merchantName}
 					</Text>
 					<View className="ml-1.5 rounded-full bg-[#57DFFE]/20 px-2 py-0.5">
 						<Text className="text-[11px] font-semibold uppercase tracking-wide text-[#0284C7]">

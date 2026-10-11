@@ -4,7 +4,7 @@ import { getCategoryIcon } from "../utils/categoryIcon";
 
 type Props = {
 	categories: string[];
-	selected: string;
+	selected: string[];
 	onSelect: (category: string) => void;
 };
 
@@ -17,11 +17,11 @@ export default function CategoryFilter({
 		<ScrollView
 			horizontal
 			showsHorizontalScrollIndicator={false}
-			className="flex-grow-0"
+			className="mt-3 flex-grow-0"
 			contentContainerClassName="gap-2 px-4 py-1 mb-1"
 		>
 			{categories.map((category) => {
-				const isActive = category === selected;
+				const isActive = selected.includes(category);
 				const icon = getCategoryIcon(category);
 
 				return (

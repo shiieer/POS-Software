@@ -22,9 +22,12 @@ export interface OrderItemCreate {
   notes?: string | null;
 }
 
+export type PaymentMethod = "cash" | "qris";
+
 export interface OrderCreate {
   table_id: number | null;
   customer_name?: string | null;
+  payment_method?: PaymentMethod;
   notes?: string | null;
   items: OrderItemCreate[];
 }

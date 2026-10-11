@@ -4,6 +4,7 @@ import { fetchSalesReportApi } from "@/services/api/report.api";
 import { getPeriodRange } from "@/features/reports/utils/dateRange";
 import { UserApi } from "@/types/api/user";
 import { getErrorMessage } from "@/utils";
+import { getDisplayName, getInitials } from "../utils/profileFormat";
 
 export type ProfileView = {
 	user: UserApi;
@@ -15,20 +16,6 @@ export type ProfileView = {
 	tenureLabel: string;
 	ordersToday: number;
 };
-
-function toDisplayName(username: string) {
-	return username
-		.replace(/[._-]/g, " ")
-		.replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
-function toInitials(username: string) {
-	const parts = username.replace(/[._-]/g, " ").trim().split(/\s+/);
-	if (parts.length >= 2) {
-		return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-	}
-	return username.slice(0, 2).toUpperCase();
-}
 
 function calcTenure(from: Date, now = new Date()) {
 	let months =
@@ -79,8 +66,8 @@ export function useProfile() {
 		const joined = new Date(user.created_at);
 		return {
 			user,
-			displayName: toDisplayName(user.username),
-			initials: toInitials(user.username),
+			displayName: getDisplayName(user.username),
+			initials: getInitials(user.username),
 			roleLabel: user.role === "admin" ? "Store Manager" : "Staff",
 			employeeId: `EMP-${String(user.id).padStart(4, "0")}`,
 			joinedLabel: joined.toLocaleDateString("en-US", {

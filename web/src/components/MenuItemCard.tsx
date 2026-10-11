@@ -1,4 +1,5 @@
 import type { MenuItem } from "../types";
+import { formatCurrency } from "../utils/formatCurrency";
 
 interface MenuItemCardProps {
 	item: MenuItem;
@@ -13,10 +14,7 @@ export default function MenuItemCard({
 	onAdd,
 	onRemove,
 }: MenuItemCardProps) {
-	const formattedPrice =
-		item.price >= 100
-			? `Rp ${item.price.toLocaleString("id-ID")}`
-			: `$${item.price.toFixed(2)}`;
+	const formattedPrice = formatCurrency(item.price);
 
 	return (
 		<article className="bg-surface-container-lowest rounded-2xl border border-surface-container-highest/80 p-3.5 flex gap-3.5 items-center relative overflow-hidden shadow-sm hover:shadow-md transition-all group">

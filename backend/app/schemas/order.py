@@ -15,6 +15,7 @@ class OrderCreate(BaseModel):
     table_id: int | None = None
     customer_name: str | None = None
     notes: str | None = None
+    payment_method: PaymentMethod | None = PaymentMethod.CASH
     items: list[OrderItemCreate] = Field(min_length=1)
 
 

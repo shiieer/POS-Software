@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / ".env",
         env_file_encoding="utf-8",
+        extra="ignore",
     )
 
     APP_NAME: str = "AFFO POS API"
@@ -19,7 +20,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE: int = 720
 
     DATABASE_URL: str
-    CUSTOMER_WEB_URL: str = "http://localhost:3000"
+    CUSTOMER_WEB_URL: str = "http://localhost:5173"
 
     ADMIN_USERNAME: str
     ADMIN_PASSWORD: str
@@ -30,6 +31,8 @@ class Settings(BaseSettings):
     SUPABASE_SERVICE_KEY: str
     SUPABASE_MENU_BUCKET: str
     SUPABASE_QR_BUCKET: str
+    SUPABASE_QRIS_BUCKET: str = "qris"
+    SUPABASE_QRIS: str = "qris"
 
 
 settings = Settings()

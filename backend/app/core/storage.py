@@ -52,3 +52,8 @@ def delete_file(*, bucket: str, path: str) -> None:
 def generate_menu_image_path(filename: str) -> str:
     ext = Path(filename).suffix.lower() or ".jpg"
     return f"menu/{uuid4().hex}{ext}"
+
+
+def generate_qris_image_path(filename: str) -> str:
+    ext = Path(filename).suffix.lower() or ".jpg"
+    return f"qris/{uuid4().hex}{ext}"

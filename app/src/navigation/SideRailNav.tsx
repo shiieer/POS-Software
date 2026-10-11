@@ -2,7 +2,6 @@
 import { View, Pressable, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import LogoutModal from "@/shared/components/LogoutModal";
 
 import { OrdersNavigator } from "@/features/orders";
 import { NewOrderScreen } from "@/features/new-order";
@@ -30,12 +29,11 @@ const SCREEN_MAP: Record<SideTabKey, () => JSX.Element> = {
 
 export default function SideRailNav() {
 	const [activeTab, setActiveTab] = useState<SideTabKey>("NewOrder");
-	const [showLogout, setShowLogout] = useState(false);
 	const ActiveScreen = SCREEN_MAP[activeTab];
 
 	return (
 		<SafeAreaView className="flex-1 flex-row bg-[#F0F5FA]">
-			<View className="w-[200px] justify-between border-r border-[#D8E3FB]/80 bg-[#F0F5FA] px-3 py-4">
+			<View className="w-[200px] justify-start border-r border-[#D8E3FB]/80 bg-[#F0F5FA] px-3 py-4">
 				<View className="gap-1.5">
 					{TABS.map((tab) => {
 						const isActive = tab.key === activeTab;
@@ -68,26 +66,11 @@ export default function SideRailNav() {
 						);
 					})}
 				</View>
-
-				<Pressable
-					onPress={() => setShowLogout(true)}
-					className="flex-row items-center gap-3 rounded-xl border border-rose-100 bg-rose-50/70 px-3.5 py-2.5 active:scale-[0.98]"
-				>
-					<Ionicons name="log-out-outline" size={20} color="#E11D48" />
-					<Text className="text-sm font-semibold text-rose-600">
-						Log Out
-					</Text>
-				</Pressable>
 			</View>
 
 			<View className="flex-1">
 				<ActiveScreen />
 			</View>
-
-			<LogoutModal
-				visible={showLogout}
-				onClose={() => setShowLogout(false)}
-			/>
 		</SafeAreaView>
 	);
 }

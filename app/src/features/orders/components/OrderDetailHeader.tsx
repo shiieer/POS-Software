@@ -30,7 +30,10 @@ export default function OrderDetailHeader({ order, onBack }: Props) {
 			</View>
 
 			<View className="flex-row items-center gap-2">
-				<OrderStatusBadge status={order.paymentStatus} />
+				<OrderStatusBadge
+					status={order.paymentStatus}
+					paymentMethod={order.paymentMethod}
+				/>
 				<KitchenStatusBadge status={order.status} />
 			</View>
 		</View>

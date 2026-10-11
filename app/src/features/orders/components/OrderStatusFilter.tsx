@@ -13,6 +13,7 @@ function countChip(filter: OrderFilter, active: boolean) {
 	if (filter === "New") return "bg-sky-100 dark:bg-sky-950";
 	if (filter === "Preparing") return "bg-amber-100 dark:bg-amber-950";
 	if (filter === "Ready") return "bg-emerald-100 dark:bg-emerald-950";
+	if (filter === "Canceled") return "bg-rose-100 dark:bg-rose-950";
 	return "bg-slate-200 dark:bg-slate-700";
 }
 
@@ -21,6 +22,7 @@ function countText(filter: OrderFilter, active: boolean) {
 	if (filter === "New") return "text-sky-700 dark:text-sky-300";
 	if (filter === "Preparing") return "text-amber-800 dark:text-amber-300";
 	if (filter === "Ready") return "text-emerald-700 dark:text-emerald-300";
+	if (filter === "Canceled") return "text-rose-700 dark:text-rose-300";
 	return "text-slate-600 dark:text-slate-300";
 }
 

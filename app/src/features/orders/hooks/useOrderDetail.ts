@@ -67,10 +67,10 @@ export function useOrderDetail(orderId: number) {
 			),
 		markReady: () =>
 			runUpdate(() => updateOrderStatusApi(orderId, { status: "ready" })),
-		markPaid: () =>
+		markPaid: (method?: "cash" | "qris") =>
 			runUpdate(() =>
 				updateOrderPaymentApi(orderId, {
-					payment_method: "cash",
+					payment_method: method || (order?.paymentMethod === "qris" ? "qris" : "cash"),
 					is_paid: true,
 				}),
 			),
