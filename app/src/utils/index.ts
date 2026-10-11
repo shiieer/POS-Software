@@ -7,8 +7,13 @@ export function formatRp(value: number) {
 	return `Rp ${value.toLocaleString("id-ID")}`;
 }
 
+function parseApiDateTime(value: string) {
+	const includesTimezone = /(?:[zZ]|[+-]\d{2}:?\d{2})$/.test(value);
+	return new Date(includesTimezone ? value : `${value}Z`);
+}
+
 export function formatTime(iso: string) {
-	return new Date(iso).toLocaleTimeString("en-US", {
+	return parseApiDateTime(iso).toLocaleTimeString("en-US", {
 		hour: "2-digit",
 		minute: "2-digit",
 	});
@@ -26,10 +31,12 @@ export function formatElapsedTime(totalSeconds: number) {
 	return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
-export function getElapsedSeconds(createdAt: string, now = Date.now()) {
-	const created = new Date(createdAt).getTime();
+export function getElapsedSeconds(createdAt: string, now: number | string = Date.now()) {
+	const created = parseApiDateTime(createdAt).getTime();
+	const end = typeof now === "string" ? parseApiDateTime(now).getTime() : now;
 	if (Number.isNaN(created)) return 0;
-	return Math.max(0, Math.floor((now - created) / 1000));
+	if (Number.isNaN(end)) return 0;
+	return Math.max(0, Math.floor((end - created) / 1000));
 }
 
 export function resolveImageUrl(url: string | null | undefined) {

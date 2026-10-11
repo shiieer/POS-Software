@@ -84,7 +84,7 @@ function App() {
 		return <InvalidQR reason={status} />;
 	}
 
-	if (orderResult) {
+	if (orderResult && !isCheckoutOpen) {
 		const refreshedOrder = notifications.records.find(
 			(record) => record.order.id === orderResult.id,
 		)?.order ?? orderResult;
@@ -163,8 +163,8 @@ function App() {
 				qrisImageUrl={qrisImageUrl}
 				submitting={submitting}
 				onConfirm={async (customerName, notes, paymentMethod) => {
-					await submitOrder(customerName, notes, paymentMethod);
-					setIsCheckoutOpen(false);
+					const result = await submitOrder(customerName, notes, paymentMethod);
+					return Boolean(result);
 				}}
 			/>
 

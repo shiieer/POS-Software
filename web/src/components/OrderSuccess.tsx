@@ -110,9 +110,15 @@ export default function OrderSuccess({ order: initialOrder, onNewOrder, qrisImag
               ✓
             </span>
             <div>
-              <p className="text-sm font-bold">Pembayaran QRIS dikonfirmasi</p>
+              <p className="text-sm font-bold">
+                {lastConfirmedOrder.payment_method === "qris"
+                  ? "Pembayaran QRIS dikonfirmasi"
+                  : "Pembayaran dikonfirmasi"}
+              </p>
               <p className="mt-0.5 text-xs text-emerald-800">
-                Pembayaran pesanan #{lastConfirmedOrder.id} telah dikonfirmasi oleh kasir.
+                {lastConfirmedOrder.payment_method === "qris"
+                  ? `Kasir telah mengonfirmasi pembayaran QRIS pesanan #${lastConfirmedOrder.id}.`
+                  : `Kasir telah mengonfirmasi pembayaran tunai pesanan #${lastConfirmedOrder.id}.`}
               </p>
               <button
                 type="button"
@@ -133,6 +139,20 @@ export default function OrderSuccess({ order: initialOrder, onNewOrder, qrisImag
               <span className="text-2xl animate-pulse">⏳</span>
             </div>
           </div>
+        ) : order.status === "ready" ? (
+          <div className="relative w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+            <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-20 animate-ping" />
+            <div className="relative w-16 h-16 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center border-2 border-emerald-300 shadow-md">
+              <span className="text-2xl">🎉</span>
+            </div>
+          </div>
+        ) : order.status === "preparing" ? (
+          <div className="relative w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+            <span className="absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-20 animate-ping" />
+            <div className="relative w-16 h-16 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center border-2 border-indigo-300 shadow-md">
+              <span className="text-2xl animate-pulse">☕</span>
+            </div>
+          </div>
         ) : (
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-200 shadow-sm">
             <span className="text-3xl font-bold">✓</span>
@@ -143,14 +163,28 @@ export default function OrderSuccess({ order: initialOrder, onNewOrder, qrisImag
         <h2 className="text-xl font-bold text-on-surface mb-1">
           {isQrisPending
             ? "Menunggu Konfirmasi Kasir"
-            : order.payment_method === "cash" && !order.is_paid
-            ? "Pesanan Diterima!"
-            : "Pembayaran Terkonfirmasi!"}
+            : order.status === "ready"
+            ? "Pesanan Siap Diambil! 🎉"
+            : order.status === "preparing"
+            ? "Pesanan Sedang Diproses ☕"
+            : order.status === "served"
+            ? "Pesanan Telah Disajikan ✓"
+            : order.is_paid
+            ? "Pembayaran Terkonfirmasi!"
+            : "Pesanan Diterima!"}
         </h2>
 
         <p className="text-xs text-outline mb-5 leading-relaxed">
           {isQrisPending
-            ? "Kasir sedang memeriksa notifikasi dana masuk di aplikasi merchant. Layar akan otomatis terupdate begitu dikonfirmasi."
+            ? "Kasir sedang memeriksa notifikasi dana masuk. Layar akan otomatis terupdate begitu dikonfirmasi."
+            : order.status === "ready"
+            ? order.payment_method === "cash" && !order.is_paid
+              ? "Pesanan Anda siap. Silakan ke kasir untuk mengambil dan membayar."
+              : "Pesanan Anda siap diambil. Silakan menuju meja kasir."
+            : order.status === "preparing"
+            ? "Barista sedang menyiapkan pesanan Anda. Harap tunggu sebentar."
+            : order.status === "served"
+            ? `Pesanan #${order.id} telah disajikan. Selamat menikmati!`
             : order.payment_method === "cash" && !order.is_paid
             ? "Pesanan Anda sudah masuk. Silakan lakukan pembayaran tunai di meja kasir."
             : `Pesanan #${order.id} telah diterima di dapur dan sedang diproses.`}
@@ -224,6 +258,30 @@ export default function OrderSuccess({ order: initialOrder, onNewOrder, qrisImag
           </div>
 
           <div className="flex justify-between text-xs mb-2 items-center">
+            <span className="text-on-surface-variant">Status Dapur</span>
+            <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md font-bold text-[10px] uppercase tracking-wide ${
+              order.status === "ready"     ? "bg-emerald-100 text-emerald-800" :
+              order.status === "preparing" ? "bg-indigo-100 text-indigo-800" :
+              order.status === "served"    ? "bg-slate-100 text-slate-700" :
+              order.status === "cancelled" ? "bg-red-100 text-red-800" :
+                                             "bg-amber-100 text-amber-800"
+            }`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${
+                order.status === "ready"     ? "bg-emerald-500" :
+                order.status === "preparing" ? "bg-indigo-500 animate-pulse" :
+                order.status === "served"    ? "bg-slate-400" :
+                order.status === "cancelled" ? "bg-red-500" :
+                                               "bg-amber-400 animate-pulse"
+              }`} />
+              {order.status === "pending"   ? "MENUNGGU" :
+               order.status === "preparing" ? "DIPROSES" :
+               order.status === "ready"     ? "SIAP DIAMBIL" :
+               order.status === "served"    ? "DISAJIKAN" :
+               order.status === "cancelled" ? "DIBATALKAN" : order.status.toUpperCase()}
+            </span>
+          </div>
+
+          <div className="flex justify-between text-xs mb-2 items-center">
             <span className="text-on-surface-variant">Status Pembayaran</span>
             <span
               className={`px-2 py-0.5 rounded-md font-bold text-[10px] uppercase tracking-wide ${
@@ -241,7 +299,6 @@ export default function OrderSuccess({ order: initialOrder, onNewOrder, qrisImag
                 : "BELUM DIBAYAR"}
             </span>
           </div>
-
           <div className="border-t border-surface-container-highest my-2.5"></div>
 
           {order.items.map((item) => {

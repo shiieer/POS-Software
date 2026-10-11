@@ -61,39 +61,32 @@ export default function ProfileScreen({ onBack }: Props) {
 					<SectionCard
 						icon="id-card-outline"
 						title="Account Information"
-						badge="Editable"
+						badge="From account"
 					>
 						<View className="border-b border-slate-100">
 							<ProfileInfoRow
 								label="Username"
 								value={`@${profile.user.username}`}
-								trailing="edit"
 							/>
 						</View>
 						<View className="border-b border-slate-100">
 							<ProfileInfoRow
 								label="Role"
 								value={profile.roleLabel}
-								trailing="edit"
 							/>
 						</View>
-						<ProfileInfoRow
-							label="Security Password"
-							value="••••••••••"
-							trailing="chevron"
-						/>
 					</SectionCard>
 
 					<SectionCard
 						icon="storefront-outline"
 						iconColor="#0284C7"
-						title="Work Details & Shift"
+						title="Account Details"
 						managed
 					>
 						<View className="border-b border-slate-100">
 							<ProfileInfoRow
-								label="Employee ID"
-								value={profile.employeeId}
+								label="Account ID"
+								value={String(profile.user.id)}
 								mono
 								badge={{
 									label: profile.user.is_active ? "Active" : "Inactive",
@@ -108,20 +101,7 @@ export default function ProfileScreen({ onBack }: Props) {
 								hint={profile.tenureLabel}
 							/>
 						</View>
-						<ProfileInfoRow
-							label="Assigned Branch"
-							value="Kedai Affo • POS"
-							trailing="domain"
-						/>
 					</SectionCard>
-
-					<Pressable className="mt-2 flex-row items-center justify-center gap-2 rounded-2xl bg-[#0284c7] py-3.5 shadow-[0_8px_20px_rgb(2,132,199,0.28)] active:scale-[0.99]">
-						<Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
-						<Text className="text-base font-semibold text-white">
-							Save Changes
-						</Text>
-					</Pressable>
-
 				</ScrollView>
 			)}
 

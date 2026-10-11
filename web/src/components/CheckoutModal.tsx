@@ -1,7 +1,26 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { formatCurrency } from "../utils/formatCurrency";
 import QrisImage from "./QrisImage";
 import type { CartItem, PaymentMethod } from "../types";
+
+function copyWithLegacyClipboard(value: string) {
+  const textarea = document.createElement("textarea");
+  textarea.value = value;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.select();
+
+  let copied = false;
+  try {
+    copied = document.execCommand("copy");
+  } finally {
+    document.body.removeChild(textarea);
+  }
+
+  return copied;
+}
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -11,7 +30,7 @@ interface CheckoutModalProps {
   tableName: string;
   qrisImageUrl: string;
   submitting: boolean;
-  onConfirm: (customerName?: string, notes?: string, paymentMethod?: PaymentMethod) => void;
+	onConfirm: (customerName?: string, notes?: string, paymentMethod?: PaymentMethod) => Promise<boolean | void> | boolean | void;
 }
 
 export default function CheckoutModal({
@@ -27,21 +46,62 @@ export default function CheckoutModal({
   const [customerName, setCustomerName] = useState("");
   const [notes, setNotes] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
-  const [copied, setCopied] = useState(false);
+  const [copyFeedback, setCopyFeedback] = useState<"copied" | "failed" | null>(null);
+  const [isClosing, setIsClosing] = useState(false);
+  const closeTimerRef = useRef<number | null>(null);
+
+  function requestClose() {
+    if (isClosing || submitting) return;
+    setIsClosing(true);
+    closeTimerRef.current = window.setTimeout(onClose, 260);
+  }
+
+  useEffect(() => () => {
+    if (closeTimerRef.current !== null) window.clearTimeout(closeTimerRef.current);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) setIsClosing(false);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
   const formattedTotal = formatCurrency(totalPrice);
 
-  const handleCopyTotal = () => {
-    navigator.clipboard.writeText(totalPrice.toString());
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  async function handleConfirm() {
+    if (submitting || isClosing) return;
+    const succeeded = await onConfirm(customerName, notes, paymentMethod);
+    if (succeeded === false) return;
+
+    setIsClosing(true);
+    closeTimerRef.current = window.setTimeout(onClose, 260);
+  }
+
+  const handleCopyTotal = async () => {
+    const amount = String(Math.round(totalPrice));
+
+    try {
+      if (navigator.clipboard?.writeText && window.isSecureContext) {
+        await navigator.clipboard.writeText(amount);
+      } else {
+        const copied = copyWithLegacyClipboard(amount);
+        if (!copied) throw new Error("Clipboard copy failed");
+      }
+      setCopyFeedback("copied");
+    } catch {
+      try {
+        if (!copyWithLegacyClipboard(amount)) throw new Error("Clipboard copy failed");
+        setCopyFeedback("copied");
+      } catch {
+        setCopyFeedback("failed");
+      }
+    }
+    window.setTimeout(() => setCopyFeedback(null), 2000);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-xs p-0 sm:p-4">
-      <div className="w-full bg-surface-container-lowest rounded-t-3xl sm:rounded-3xl shadow-2xl p-6 max-h-[92vh] overflow-y-auto border border-surface-container-highest/60 flex flex-col">
+    <div className={`${isClosing ? "checkout-backdrop-exit" : "checkout-backdrop-enter"} fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-xs p-0 sm:p-4`}>
+      <div className={`${isClosing ? "checkout-panel-exit" : "checkout-panel-enter"} w-full bg-surface-container-lowest rounded-t-3xl sm:rounded-3xl shadow-2xl p-6 max-h-[92vh] overflow-y-auto border border-surface-container-highest/60 flex flex-col`}>
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-surface-container-highest/60">
           <div>
@@ -49,7 +109,7 @@ export default function CheckoutModal({
             <p className="text-xs text-primary font-semibold uppercase">{tableName}</p>
           </div>
           <button
-            onClick={onClose}
+            onClick={requestClose}
             className="w-8 h-8 rounded-full bg-surface-container-low text-on-surface-variant flex items-center justify-center hover:bg-surface-container transition-colors"
           >
             ✕
@@ -116,22 +176,32 @@ export default function CheckoutModal({
             <button
               type="button"
               onClick={() => setPaymentMethod("cash")}
-              className={`p-3 rounded-2xl border text-left transition-all flex flex-col justify-between ${
+              data-selected={paymentMethod === "cash"}
+              className={`payment-method-option min-h-32 p-3 rounded-2xl border text-left transition-all flex flex-col ${paymentMethod === "cash" ? "payment-method-option-selected" : ""} ${
                 paymentMethod === "cash"
                   ? "border-primary bg-primary/5 ring-2 ring-primary/20 shadow-sm"
                   : "border-surface-container-highest bg-surface-container-low hover:bg-surface-container"
               }`}
             >
-              <div className="flex items-center justify-between w-full mb-1">
-                <span className="text-lg">💵</span>
-                {paymentMethod === "cash" && (
-                  <span className="w-2.5 h-2.5 rounded-full bg-primary" />
-                )}
+              <div className="mb-2 flex w-full items-start justify-between">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-sky-200 bg-sky-50 text-primary">
+                  <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <path d="M4 9h16v11H4zM3 9l2-5h14l2 5M8 13h8M9 20v-4h6v4" />
+                    <circle cx="12" cy="7" r="1" />
+                  </svg>
+                </span>
+                {paymentMethod === "cash" ? (
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-sky-600 text-white">
+                    <svg aria-hidden="true" className="h-3 w-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="m3.5 8 3 3 6-6" />
+                    </svg>
+                  </span>
+                ) : null}
               </div>
-              <div>
-                <p className="text-xs font-bold text-on-surface">Bayar di Kasir</p>
-                <p className="text-[10px] text-on-surface-variant mt-0.5">
-                  Tunai / Kartu di kasir
+              <div className="w-full">
+                <p className="text-xs font-bold text-on-surface">Pay at Counter</p>
+                <p className="mt-0.5 text-[10px] leading-4 text-on-surface-variant">
+                  Bayar tunai atau kartu langsung di kasir.
                 </p>
               </div>
             </button>
@@ -139,23 +209,42 @@ export default function CheckoutModal({
             <button
               type="button"
               onClick={() => setPaymentMethod("qris")}
-              className={`p-3 rounded-2xl border text-left transition-all flex flex-col justify-between ${
+              data-selected={paymentMethod === "qris"}
+              className={`payment-method-option min-h-32 p-3 rounded-2xl border text-left transition-all flex flex-col ${paymentMethod === "qris" ? "payment-method-option-selected" : ""} ${
                 paymentMethod === "qris"
                   ? "border-primary bg-primary/5 ring-2 ring-primary/20 shadow-sm"
                   : "border-surface-container-highest bg-surface-container-low hover:bg-surface-container"
               }`}
             >
-              <div className="flex items-center justify-between w-full mb-1">
-                <span className="text-lg">📱</span>
-                {paymentMethod === "qris" && (
-                  <span className="w-2.5 h-2.5 rounded-full bg-primary" />
-                )}
+              <div className="mb-2 flex w-full items-start justify-between">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-sky-200 bg-sky-50 text-primary">
+                  <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <rect x="3" y="5" width="18" height="14" rx="2" />
+                    <path d="M3 10h18M7 15h3" />
+                  </svg>
+                </span>
+                {paymentMethod === "qris" ? (
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-sky-600 text-white">
+                    <svg aria-hidden="true" className="h-3 w-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="m3.5 8 3 3 6-6" />
+                    </svg>
+                  </span>
+                ) : null}
               </div>
-              <div>
-                <p className="text-xs font-bold text-on-surface">QRIS</p>
-                <p className="text-[10px] text-on-surface-variant mt-0.5">
-                  Scan m-Banking / e-Wallet
+              <div className="w-full">
+                <div className="flex items-center gap-1.5">
+                  <p className="text-xs font-bold text-on-surface">Pay Now</p>
+                  <span className="rounded-full bg-sky-100 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-sky-700">
+                    Instant
+                  </span>
+                </div>
+                <p className="mt-0.5 text-[10px] leading-4 text-on-surface-variant">
+                  Bayar dengan QRIS melalui m-Banking atau e-Wallet.
                 </p>
+                <div className="mt-2 flex flex-wrap gap-1">
+                  <span className="rounded-md border border-sky-100 bg-white/80 px-1.5 py-0.5 text-[8px] font-semibold text-sky-700">QRIS</span>
+                  <span className="rounded-md border border-sky-100 bg-white/80 px-1.5 py-0.5 text-[8px] font-semibold text-sky-700">E-Wallet</span>
+                </div>
               </div>
             </button>
           </div>
@@ -163,7 +252,7 @@ export default function CheckoutModal({
 
         {/* QRIS View */}
         {paymentMethod === "qris" && (
-          <div className="mb-4 p-4 rounded-2xl border border-rose-200/80 bg-rose-50/50 flex flex-col items-center">
+          <div key="qris-payment-details" className="payment-details-enter mb-4 p-4 rounded-2xl border border-rose-200/80 bg-rose-50/50 flex flex-col items-center">
             <div className="flex items-center justify-between w-full mb-2">
               <span className="text-xs font-bold text-rose-900">Scan QRIS untuk Bayar</span>
               <button
@@ -171,7 +260,11 @@ export default function CheckoutModal({
                 onClick={handleCopyTotal}
                 className="text-[11px] font-semibold text-rose-700 hover:text-rose-900 underline flex items-center gap-1"
               >
-                {copied ? "✓ Tersalin!" : "Salin Nominal"}
+                {copyFeedback === "copied"
+                  ? "✓ Tersalin!"
+                  : copyFeedback === "failed"
+                    ? "Gagal menyalin"
+                    : "Salin Nominal"}
               </button>
             </div>
 
@@ -188,7 +281,7 @@ export default function CheckoutModal({
         )}
 
         {paymentMethod === "cash" && (
-          <div className="mb-4 p-3 rounded-2xl bg-sky-50/80 border border-sky-200/60 text-sky-900 text-xs">
+          <div key="cash-payment-details" className="payment-details-enter mb-4 p-3 rounded-2xl bg-sky-50/80 border border-sky-200/60 text-sky-900 text-xs">
             <p className="font-semibold mb-0.5">ℹ️ Pembayaran di Kasir</p>
             <p className="text-[11px] text-sky-800">
               Pesanan Anda akan langsung dikirim ke kasir. Silakan menuju meja kasir untuk menyelesaikan pembayaran.
@@ -206,7 +299,7 @@ export default function CheckoutModal({
           </div>
 
           <button
-            onClick={() => onConfirm(customerName, notes, paymentMethod)}
+            onClick={handleConfirm}
             disabled={submitting}
             className={`w-full py-3.5 rounded-2xl text-white font-bold transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 active:scale-[0.98] ${
               paymentMethod === "qris"

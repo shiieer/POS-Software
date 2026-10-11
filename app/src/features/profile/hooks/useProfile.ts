@@ -4,14 +4,13 @@ import { fetchSalesReportApi } from "@/services/api/report.api";
 import { getPeriodRange } from "@/features/reports/utils/dateRange";
 import { UserApi } from "@/types/api/user";
 import { getErrorMessage } from "@/utils";
-import { getDisplayName, getInitials } from "../utils/profileFormat";
+import { getInitials } from "../utils/profileFormat";
 
 export type ProfileView = {
 	user: UserApi;
 	displayName: string;
 	initials: string;
 	roleLabel: string;
-	employeeId: string;
 	joinedLabel: string;
 	tenureLabel: string;
 	ordersToday: number;
@@ -66,10 +65,9 @@ export function useProfile() {
 		const joined = new Date(user.created_at);
 		return {
 			user,
-			displayName: getDisplayName(user.username),
+			displayName: user.username,
 			initials: getInitials(user.username),
-			roleLabel: user.role === "admin" ? "Store Manager" : "Staff",
-			employeeId: `EMP-${String(user.id).padStart(4, "0")}`,
+			roleLabel: user.role === "admin" ? "Admin" : "Staff",
 			joinedLabel: joined.toLocaleDateString("en-US", {
 				month: "long",
 				day: "numeric",

@@ -45,3 +45,146 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+@keyframes notification-center-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes notification-center-panel-in {
+  from { opacity: 0; translate: 0 32px; scale: 0.985; }
+  to { opacity: 1; translate: 0 0; scale: 1; }
+}
+
+@keyframes notification-center-backdrop-out {
+  to { opacity: 0; }
+}
+
+@keyframes notification-center-panel-out {
+  to { opacity: 0; translate: 0 100%; scale: 0.99; }
+}
+
+@keyframes order-detail-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes order-detail-panel-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes order-detail-backdrop-out {
+  to { opacity: 0; }
+}
+
+@keyframes order-detail-panel-out {
+  to { opacity: 0; transform: translateY(10px) scale(0.97); }
+}
+
+@keyframes checkout-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes checkout-panel-in {
+  from { opacity: 0; transform: translateY(28px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes checkout-backdrop-out {
+  to { opacity: 0; }
+}
+
+@keyframes checkout-panel-out {
+  to { opacity: 0; transform: translateY(32px) scale(0.985); }
+}
+
+@keyframes payment-details-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.notification-center-backdrop-enter {
+  animation: notification-center-backdrop-in 220ms ease-out both;
+}
+
+.notification-center-panel-enter {
+  animation: notification-center-panel-in 320ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+}
+
+.notification-center-backdrop-exit {
+  animation: notification-center-backdrop-out 220ms ease-in both;
+}
+
+.notification-center-panel-exit {
+  animation: notification-center-panel-out 260ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+.order-detail-backdrop-enter {
+  animation: order-detail-backdrop-in 180ms ease-out both;
+}
+
+.order-detail-panel-enter {
+  animation: order-detail-panel-in 260ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+  transform-origin: center;
+}
+
+.order-detail-backdrop-exit {
+  animation: order-detail-backdrop-out 180ms ease-in both;
+}
+
+.order-detail-panel-exit {
+  animation: order-detail-panel-out 220ms cubic-bezier(0.4, 0, 1, 1) both;
+  transform-origin: center;
+}
+
+.checkout-backdrop-enter {
+  animation: checkout-backdrop-in 220ms ease-out both;
+}
+
+.checkout-panel-enter {
+  animation: checkout-panel-in 320ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+}
+
+.checkout-backdrop-exit {
+  animation: checkout-backdrop-out 220ms ease-in both;
+}
+
+.checkout-panel-exit {
+  animation: checkout-panel-out 260ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+.payment-method-option {
+  transition: transform 220ms cubic-bezier(0.2, 0.75, 0.25, 1), box-shadow 220ms ease, border-color 220ms ease, background-color 220ms ease;
+}
+
+.payment-method-option-selected {
+  transform: translateY(-1px) scale(1.015);
+}
+
+.payment-details-enter {
+  animation: payment-details-in 260ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .notification-center-backdrop-enter,
+  .notification-center-panel-enter,
+  .notification-center-backdrop-exit,
+  .notification-center-panel-exit,
+  .order-detail-backdrop-enter,
+  .order-detail-panel-enter,
+  .order-detail-backdrop-exit,
+  .order-detail-panel-exit,
+  .checkout-backdrop-enter,
+  .checkout-panel-enter,
+  .checkout-backdrop-exit,
+  .checkout-panel-exit,
+  .payment-details-enter {
+    animation-duration: 1ms;
+  }
+
+  .payment-method-option {
+    transition-duration: 1ms;
+  }
+}

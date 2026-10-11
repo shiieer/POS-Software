@@ -34,7 +34,11 @@ export default function OrderCard({
 	const { isDark } = useAppTheme();
 	const [now, setNow] = useState(Date.now());
 	const theme = getOrderCardTheme(order, isDark);
-	const elapsedSeconds = getElapsedSeconds(order.createdAt, now);
+	const isComplete = order.status === "served" || order.status === "cancelled";
+	const elapsedSeconds = getElapsedSeconds(
+		order.createdAt,
+		isComplete ? order.updatedAt : now,
+	);
 	const showBag = order.locationType === "to-go";
 
 	useEffect(() => {

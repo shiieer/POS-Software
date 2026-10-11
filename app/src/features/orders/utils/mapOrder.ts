@@ -16,7 +16,12 @@ function mapStatus(status: ApiOrderStatus): OrderStatus {
 }
 
 export function mapOrder(api: OrderApi): Order {
-	const elapsedSeconds = getElapsedSeconds(api.created_at);
+	const status = mapStatus(api.status);
+	const isComplete = status === "served" || status === "cancelled";
+	const elapsedSeconds = getElapsedSeconds(
+		api.created_at,
+		isComplete ? api.updated_at : Date.now(),
+	);
 	const isTable = Boolean(api.table_id);
 	const isPriority = !api.is_paid && elapsedSeconds >= 300;
 	const rawPaymentMethod = api.payment_method || api.paymeny_method;
@@ -33,7 +38,7 @@ export function mapOrder(api: OrderApi): Order {
 		orderCode: `#ORD-${String(api.id).padStart(4, "0")}`,
 		sourceLabel: api.customer_name?.trim() || (isTable ? "Dine-in" : "Walk-in"),
 		tag: isPriority ? "Priority" : isTable ? undefined : "Bagged",
-		status: mapStatus(api.status),
+		status,
 		paymentStatus: api.is_paid ? "paid" : "unpaid",
 		paymentMethod,
 		locationType: isTable ? "table" : "to-go",
@@ -51,6 +56,7 @@ export function mapOrder(api: OrderApi): Order {
 			subtotal: item.subtotal ?? 0,
 		})),
 		createdAt: api.created_at,
+		updatedAt: api.updated_at,
 		totalAmount: api.total_amount ?? 0,
 	};
 }

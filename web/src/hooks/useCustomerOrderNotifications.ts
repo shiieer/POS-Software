@@ -76,8 +76,7 @@ export function useCustomerOrderNotifications(tableId: number | null) {
 				try {
 					const updated = await api.getOrderStatus(previous.id);
 					if (!active) return;
-					const becamePaid = previous.payment_method === "qris" && !previous.is_paid &&
-						updated.payment_method === "qris" && updated.is_paid;
+					const becamePaid = !previous.is_paid && updated.is_paid;
 					const statusChanged = previous.status !== updated.status;
 					const shouldNotify = becamePaid || statusChanged;
 					const merged = addOrUpdateOrder(
@@ -98,9 +97,15 @@ export function useCustomerOrderNotifications(tableId: number | null) {
 						setLastConfirmedOrderId(updated.id);
 						if (window.isSecureContext && "Notification" in window && Notification.permission === "granted") {
 							try {
-								const notification = new Notification("Pembayaran QRIS dikonfirmasi", {
-									body: `Kasir telah mengonfirmasi pembayaran pesanan #${updated.id}.`,
-									tag: `qris-payment-${updated.id}`,
+								const notifTitle = updated.payment_method === "qris"
+									? "Pembayaran QRIS dikonfirmasi"
+									: "Pembayaran dikonfirmasi";
+								const notifBody = updated.payment_method === "qris"
+									? `Kasir telah mengonfirmasi pembayaran pesanan #${updated.id}.`
+									: `Kasir mengonfirmasi pembayaran tunai pesanan #${updated.id}.`;
+								const notification = new Notification(notifTitle, {
+									body: notifBody,
+									tag: `payment-${updated.id}`,
 								});
 								notification.onclick = () => {
 									window.focus();
@@ -109,6 +114,30 @@ export function useCustomerOrderNotifications(tableId: number | null) {
 								};
 							} catch {
 								// The in-page notification center remains available.
+							}
+						}
+					} else if (statusChanged) {
+						if (window.isSecureContext && "Notification" in window && Notification.permission === "granted") {
+							try {
+								const statusLabels: Record<string, string> = {
+									preparing: "Pesanan sedang diproses ☕",
+									ready: "Pesanan siap diambil! 🎉",
+									served: "Pesanan telah disajikan ✓",
+								};
+								const label = statusLabels[updated.status];
+								if (label) {
+									const notification = new Notification(label, {
+										body: `Pesanan #${updated.id}`,
+										tag: `status-${updated.id}-${updated.status}`,
+									});
+									notification.onclick = () => {
+										window.focus();
+										setRequestedOrderId(updated.id);
+										notification.close();
+									};
+								}
+							} catch {
+								// silently ignore
 							}
 						}
 					}

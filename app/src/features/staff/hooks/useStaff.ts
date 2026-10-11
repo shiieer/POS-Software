@@ -62,6 +62,21 @@ export function useStaff() {
 		}
 	}
 
+	async function resetPassword(userId: number, password: string) {
+		setSaving(true);
+		try {
+			const updated = await updateUserApi(userId, { password });
+			setStaff((prev) =>
+				prev.map((user) => (user.id === userId ? updated : user)),
+			);
+			return updated;
+		} catch (err) {
+			throw new Error(getErrorMessage(err, "Failed to reset password"));
+		} finally {
+			setSaving(false);
+		}
+	}
+
 	return {
 		staff,
 		loading,
@@ -69,6 +84,7 @@ export function useStaff() {
 		error,
 		addStaff,
 		toggleActive,
+		resetPassword,
 		reload: load,
 	};
 }

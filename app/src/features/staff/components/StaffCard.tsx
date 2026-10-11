@@ -1,14 +1,16 @@
 import { UserApi } from "@/types/api/user";
-import { Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import AvailabilitySwitch from "@/features/menu/components/AvailabilitySwitch";
 import { getDisplayName, getInitials } from "@/features/profile/utils/profileFormat";
 
 type Props = {
 	user: UserApi;
 	onToggleActive?: (value: boolean) => void;
+	onResetPassword?: () => void;
 };
 
-export default function StaffCard({ user, onToggleActive }: Props) {
+export default function StaffCard({ user, onToggleActive, onResetPassword }: Props) {
 	const isAdmin = user.role === "admin";
 	const active = user.is_active;
 
@@ -26,7 +28,7 @@ export default function StaffCard({ user, onToggleActive }: Props) {
 				shadowOffset: { width: 0, height: 6 },
 			}}
 		>
-			<View className="flex-row items-center gap-3.5">
+			<View className="flex-row items-start gap-3.5">
 				<View
 					className={`h-12 w-12 items-center justify-center rounded-2xl ${
 						!active
@@ -49,7 +51,7 @@ export default function StaffCard({ user, onToggleActive }: Props) {
 					</Text>
 				</View>
 
-				<View className="flex-1">
+				<View className="flex-1 pt-1">
 					<View className="flex-row flex-wrap items-center gap-2">
 						<Text
 							className={`text-base font-bold ${
@@ -83,6 +85,12 @@ export default function StaffCard({ user, onToggleActive }: Props) {
 						@{user.username} • {isAdmin ? "Manager" : "Staff"}
 					</Text>
 				</View>
+				<View className="items-end self-stretch">
+					<AvailabilitySwitch
+						value={active}
+						onValueChange={onToggleActive ?? (() => {})}
+					/>
+				</View>
 			</View>
 
 			<View className="mt-3.5 flex-row items-center justify-between border-t border-slate-100 pt-3.5">
@@ -102,10 +110,17 @@ export default function StaffCard({ user, onToggleActive }: Props) {
 						{active ? "Active" : "Inactive"}
 					</Text>
 				</View>
-				<AvailabilitySwitch
-					value={active}
-					onValueChange={onToggleActive ?? (() => {})}
-				/>
+				<Pressable
+					onPress={onResetPassword}
+					className="flex-row items-center gap-1.5 rounded-lg px-2 py-1.5"
+					accessibilityRole="button"
+					accessibilityLabel={`Reset password for ${user.username}`}
+				>
+					<Ionicons name="key-outline" size={15} color="#0284C7" />
+					<Text className="text-xs font-semibold text-sky-700">
+						Reset password
+					</Text>
+				</Pressable>
 			</View>
 		</View>
 	);

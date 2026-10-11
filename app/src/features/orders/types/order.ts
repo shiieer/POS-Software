@@ -31,6 +31,7 @@ export type Order = {
 	elapsedSeconds: number;
 	items: OrderLineItem[];
 	createdAt: string;
+	updatedAt: string;
 	totalAmount: number;
 	accentColor?: "teal" | "blue";
 	isUrgent?: boolean;

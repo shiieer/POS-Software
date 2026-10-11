@@ -37,8 +37,12 @@ export function useOrderDetail(orderId: number) {
 		return () => clearInterval(timer);
 	}, []);
 
+	const isComplete = order?.status === "served" || order?.status === "cancelled";
 	const elapsedSeconds = order
-		? getElapsedSeconds(order.createdAt, now)
+		? getElapsedSeconds(
+				order.createdAt,
+				isComplete ? order.updatedAt : now,
+			)
 		: 0;
 
 	async function runUpdate(action: () => Promise<unknown>) {

@@ -44,12 +44,12 @@ export default function ProfileAvatarCard({ profile }: Props) {
 						{profile.ordersToday}
 					</Text>
 					<Text className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-						Orders
+						Orders Today
 					</Text>
 				</View>
 				<View className="flex-1 items-center border-x border-slate-100">
 					<Text className="text-sm font-bold text-sky-600">
-						{profile.user.role === "admin" ? "Admin" : "Staff"}
+						{profile.roleLabel}
 					</Text>
 					<Text className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
 						Role
