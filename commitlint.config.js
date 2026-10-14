@@ -23,5 +23,8 @@ export default {
 		"subject-empty": [2, "never"],
 		"subject-full-stop": [2, "never", "."],
 		"header-max-length": [2, "always", 100],
+		// Body and footer lines can be as long as needed
+		"body-max-line-length": [0],
+		"footer-max-line-length": [0],
 	},
 };
