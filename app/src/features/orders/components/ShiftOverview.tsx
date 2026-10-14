@@ -20,9 +20,6 @@ export default function ShiftOverview({ metrics }: Props) {
 					<Text className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">
 						{metrics.inQueue}
 					</Text>
-					<Text className="text-[10px] font-semibold text-sky-600 dark:text-sky-400">
-						tik
-					</Text>
 				</View>
 				<View className="mt-1 flex-row items-center">
 					<Ionicons name="trending-up" size={13} color="#34D399" />

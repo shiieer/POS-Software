@@ -41,6 +41,7 @@ export type CreateOrderPayload = {
 	table_id?: number | null;
 	customer_name?: string | null;
 	notes?: string | null;
+	payment_method?: "cash" | "qris" | "other";
 	items: CreateOrderItemPayload[];
 };
 

@@ -23,6 +23,10 @@ type Props = {
 	onUpdateNote: (menuItemId: number, note: string) => void;
 	onEditDetail?: (item: CartItem) => void;
 	onClear: () => void;
+	paymentMethod: "cash" | "qris";
+	isPaid: boolean;
+	onPaymentMethodChange: (method: "cash" | "qris") => void;
+	onIsPaidChange: (paid: boolean) => void;
 };
 
 export default function CartBar({
@@ -36,6 +40,10 @@ export default function CartBar({
 	onUpdateNote,
 	onEditDetail,
 	onClear,
+	paymentMethod,
+	isPaid,
+	onPaymentMethodChange,
+	onIsPaidChange,
 }: Props) {
 	const [expanded, setExpanded] = useState(false);
 	const [focusedNote, setFocusedNote] = useState<number | null>(null);
@@ -189,6 +197,57 @@ export default function CartBar({
 						<Text className="text-[14px] font-extrabold text-slate-800">
 							{formatRp(total)}
 						</Text>
+					</View>
+
+					{/* Payment options */}
+					<View className="border-t border-sky-100 px-4 pb-3 pt-2">
+						<Text className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+							Payment
+						</Text>
+						{/* Method */}
+						<View className="mb-2 flex-row gap-2">
+							{(["cash", "qris"] as const).map((method) => (
+								<Pressable
+									key={method}
+									onPress={() => onPaymentMethodChange(method)}
+									className={`flex-1 flex-row items-center justify-center gap-1.5 rounded-xl border py-2 ${
+										paymentMethod === method
+											? "border-sky-400 bg-sky-50"
+											: "border-slate-200 bg-white"
+									}`}
+								>
+									<Ionicons
+										name={method === "cash" ? "cash-outline" : "qr-code-outline"}
+										size={14}
+										color={paymentMethod === method ? "#0284C7" : "#94A3B8"}
+									/>
+									<Text className={`text-xs font-bold ${paymentMethod === method ? "text-sky-700" : "text-slate-400"}`}>
+										{method === "cash" ? "Cash" : "QRIS"}
+									</Text>
+								</Pressable>
+							))}
+						</View>
+						{/* Paid now toggle */}
+						<Pressable
+							onPress={() => onIsPaidChange(!isPaid)}
+							className={`flex-row items-center justify-between rounded-xl border px-3 py-2.5 ${
+								isPaid ? "border-emerald-300 bg-emerald-50" : "border-slate-200 bg-white"
+							}`}
+						>
+							<View className="flex-row items-center gap-2">
+								<Ionicons
+									name={isPaid ? "checkmark-circle" : "ellipse-outline"}
+									size={16}
+									color={isPaid ? "#10B981" : "#94A3B8"}
+								/>
+								<Text className={`text-xs font-bold ${isPaid ? "text-emerald-700" : "text-slate-400"}`}>
+									{isPaid ? "Paid now" : "Pay later"}
+								</Text>
+							</View>
+							<Text className="text-[10px] text-slate-400">
+								{isPaid ? "Mark as settled" : "Collect payment later"}
+							</Text>
+						</Pressable>
 					</View>
 				</View>
 			)}

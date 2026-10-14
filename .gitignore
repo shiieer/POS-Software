@@ -28,6 +28,10 @@ node_modules/
 .npm
 .pnp
 .pnp.js
+package-lock.json
+
+# Husky internals (auto-generated, not meant to be committed)
+.husky/_
 
 # Build Outputs & Bundlers
 dist/

@@ -23,6 +23,8 @@ export default function OrderScreen({ onOpenOrder }: Props) {
 		filters,
 		selectedFilter,
 		setSelectedFilter,
+		paymentFilter,
+		setPaymentFilter,
 		counts,
 		metrics,
 		orders,
@@ -62,6 +64,43 @@ export default function OrderScreen({ onOpenOrder }: Props) {
 				counts={counts}
 				onSelect={setSelectedFilter}
 			/>
+
+			{/* Payment filter */}
+			<View className="flex-row items-center gap-2 px-4 pb-1 pt-1">
+				{(["All", "Unpaid", "Paid"] as const).map((pf) => {
+					const isActive = paymentFilter === pf;
+					return (
+						<Pressable
+							key={pf}
+							onPress={() => setPaymentFilter(pf)}
+							className={`flex-row items-center gap-1 rounded-full border px-3 py-1 ${
+								isActive
+									? pf === "Unpaid"
+										? "border-rose-400 bg-rose-50"
+										: pf === "Paid"
+										? "border-emerald-400 bg-emerald-50"
+										: "border-sky-400 bg-sky-50"
+									: "border-slate-200 bg-white"
+							}`}
+						>
+							<View className={`h-2 w-2 rounded-full ${
+								pf === "Unpaid" ? "bg-rose-400" :
+								pf === "Paid"   ? "bg-emerald-400" :
+								                  "bg-slate-300"
+							}`} />
+							<Text className={`text-[11px] font-bold ${
+								isActive
+									? pf === "Unpaid" ? "text-rose-700"
+									: pf === "Paid"   ? "text-emerald-700"
+									:                   "text-sky-700"
+									: "text-slate-500"
+							}`}>
+								{pf}
+							</Text>
+						</Pressable>
+					);
+				})}
+			</View>
 
 			{pendingQrisCount > 0 ? (
 				<Pressable

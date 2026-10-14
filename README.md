@@ -14,6 +14,11 @@ A full-stack point-of-sale system for cafes and restaurants, built across three 
 pos_software/
 ├── README.md
 ├── .gitignore
+├── package.json                    # Root — Husky + lint-staged + commitlint
+├── commitlint.config.js            # Conventional commit rules
+├── .husky/
+│   ├── pre-commit                  # Runs lint-staged on staged files
+│   └── commit-msg                  # Enforces conventional commit format
 │
 ├── backend/                        # FastAPI REST API
 │   ├── app/
@@ -36,15 +41,18 @@ pos_software/
 │   ├── src/
 │   │   ├── features/
 │   │   │   ├── auth/               # Login screen & token management
-│   │   │   ├── new-order/          # POS checkout flow
-│   │   │   ├── orders/             # Order management board
+│   │   │   ├── new-order/          # POS checkout with payment method selection
+│   │   │   ├── orders/             # Order board with status + payment filters
 │   │   │   ├── tables/             # Table management & QR viewer
 │   │   │   ├── menu/               # Menu CRUD
 │   │   │   ├── reports/            # Sales reports
 │   │   │   ├── staff/              # Staff management
 │   │   │   ├── profile/            # Profile settings
 │   │   │   └── more/               # More / settings hub
-│   │   ├── shared/                 # Shared UI components & hooks
+│   │   ├── shared/
+│   │   │   ├── components/         # ScreenContainer, AppHeader, Toast, etc.
+│   │   │   └── hooks/              # useMerchantName, useOrientationLayout, etc.
+│   │   ├── navigation/             # BottomTabNav, SideRailNav
 │   │   ├── services/               # API service layer
 │   │   ├── types/                  # TypeScript types
 │   │   └── constants/              # App-wide constants
@@ -55,8 +63,10 @@ pos_software/
     ├── src/
     │   ├── api/                    # API client (dynamic LAN host detection)
     │   ├── components/             # Header, MenuList, CartBar, CheckoutModal,
-    │   │                           # OrderStatusDrawer, OrderSuccess, and more
-    │   ├── hooks/                  # useCart, useMenu, useTable, useOrderStatus,
+    │   │                           # CustomerNotificationCenter, OrderSuccess,
+    │   │                           # OrderDetailModal, OrderStatusDrawer, etc.
+    │   ├── hooks/                  # useCart, useMenu, useTable,
+    │   │                           # useCustomerOrderNotifications,
     │   │                           # useQrisSettings, useLocalStorage
     │   ├── types/                  # TypeScript interfaces
     │   └── utils/                  # formatCurrency
@@ -72,37 +82,47 @@ pos_software/
 - JWT authentication with admin and staff role separation
 - Full menu CRUD with image upload via Supabase Storage
 - Table management — create tables, generate QR codes, toggle active/inactive
-- QR token verification endpoint for customer web app (`GET /tables/verify`)
-- Customer order creation (public, no auth)
-- Staff order lifecycle: `pending` → `confirmed` → `processing` → `ready` → `completed`
+- Smart LAN IP detection when building QR URLs so phones can scan without manual config
+- QR token verification endpoint (`GET /tables/verify`)
+- Customer order creation — public endpoint, no auth required
+- Staff order lifecycle: `pending` → `preparing` → `ready` → `served`
+- Payment tracking independent of kitchen status — cash or QRIS, paid or unpaid
 - QRIS payment confirmation workflow
 - Staff management (admin only)
 - Sales reports with date range filters
-- QRIS merchant settings (image + merchant name)
+- Merchant name + QRIS image settings
 - Swagger UI at `/docs`
 
 ### Customer Web App (`web/`)
-- Mobile-first UI with full device width layout
-- QR code scanning flow — reads `?table=` and `?token=` from URL, verifies with backend
+- Full device width, mobile-first layout
+- QR scan flow — reads `?table=` and `?token=` from URL, verifies with backend before showing menu
 - Category tabs with smooth horizontal scrolling
 - Item quantity stepper directly on menu cards
-- Cart state persisted in `localStorage` per table
-- Checkout modal with optional customer name, order notes, and payment method selection (Cash / QRIS)
-- Live order status tracking — notification bell in header polls the backend every 4 seconds
-- Bell badge lights up on status changes (pending → confirmed → processing → ready)
-- Order status drawer — slide up from bell, drag down to dismiss
-- QRIS payment confirmation banner when cashier confirms payment
-- Automatic LAN IP detection so phones on the same Wi-Fi can reach the backend without manual config
+- Cart persisted in `localStorage` per table — survives page refresh
+- Checkout modal with optional customer name, order notes, and payment method (Cash / QRIS)
+- Notification bell icon in header — always visible, lights up with a red badge on any order update
+- Bell drawer slides up from the bottom, drag down to dismiss (no close button)
+- Live order status per item in the notification drawer: pending → preparing ☕ → ready 🎉 → served
+- Payment line adapts per method: QRIS shows confirmation state, cash shows when to pay
+- `OrderDetailModal` shows kitchen status banner + payment banner, different for cash vs QRIS
+- `OrderSuccess` screen icon and heading update in real time with kitchen status
+- QRIS confirmation triggers browser OS notification (if permission granted)
+- Automatic LAN IP substitution — `VITE_API_URL` localhost is replaced with the current hostname at runtime
 
 ### Staff Mobile App (`app/`)
-- Secure login with JWT stored in device keychain
-- New order POS screen with menu search and cart
-- Order management board with status filters and real-time refresh
-- Table management — add/remove tables, view & download QR codes, toggle active state
-- Menu management — add/edit items with image picker and category assignment
-- Sales reports with charts
+- Secure login with JWT
+- Responsive layout — portrait uses bottom tabs, landscape switches to side rail
+- Tapping the active Menu tab while on add/edit screen returns to the menu list
+- **New Order screen** — pick Cash or QRIS, and choose Paid Now or Pay Later before submitting
+- **Order board** — status filter (All / New / Preparing / Ready / Served / Canceled) combined with payment filter (All / Unpaid / Paid)
+- Real-time polling every 6 seconds, pull-to-refresh supported
+- QRIS pending banner at top of order board for unconfirmed QRIS orders
+- Table management — drag-to-dismiss settings sheet, simple slide animation for Active/Maintenance toggle
+- Merchant name loaded dynamically from backend settings, shown in all feature headers (no hardcoded store name)
+- Profile icon removed from all feature headers
+- Menu CRUD with image picker and category assignment
+- Sales reports
 - Staff management (admin only)
-- Profile and store settings
 
 ---
 
@@ -143,7 +163,7 @@ SECRET_KEY=your-long-random-secret
 DATABASE_URL=sqlite:///./data/pos.db
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=your-password
-CUSTOMER_WEB_URL=http://localhost:5173
+CUSTOMER_WEB_URL=http://YOUR_LAN_IP:5173
 
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_KEY=your-service-role-key
@@ -152,11 +172,10 @@ SUPABASE_QR_BUCKET=qr_codes
 SUPABASE_QRIS_BUCKET=qris
 ```
 
-> `CUSTOMER_WEB_URL` is used to build QR code URLs. Leave it as `localhost:5173` for development — the backend automatically substitutes the real LAN IP when generating QR codes so phones can scan them.
 
 ```bash
 python run.py
-# API available at http://localhost:8000
+# API available at http://0.0.0.0:8000
 # Swagger UI at  http://localhost:8000/docs
 ```
 
@@ -167,17 +186,17 @@ python run.py
 ```bash
 cd web
 npm install
-cp .env.example .env   # or: copy .env.example .env on Windows
+copy .env.example .env   # or: cp .env.example .env on macOS/Linux
 npm run dev
 ```
 
 `web/.env` reference:
 
 ```env
-VITE_API_URL=http://localhost:8000
+VITE_API_URL=http://YOUR_LAN_IP:8000
 ```
 
-> The app auto-replaces `localhost` with `window.location.hostname` at runtime, so phones on the same Wi-Fi automatically reach the backend.
+> Must use `VITE_` prefix — Vite only exposes variables with that prefix to the browser. The app replaces `localhost` with `window.location.hostname` at runtime for LAN access.
 
 Vite starts with network exposure:
 ```
@@ -192,24 +211,46 @@ Vite starts with network exposure:
 ```bash
 cd app
 npm install
-cp .env.example .env   # set EXPO_PUBLIC_API_URL=http://YOUR_LAN_IP:8000
+copy .env.example .env   # set EXPO_PUBLIC_API_URL=http://YOUR_LAN_IP:8000
 npm start
 ```
 
-Press `a` for Android emulator, `i` for iOS simulator, or scan the Expo QR code with Expo Go on your phone.
+Press `a` for Android emulator, `i` for iOS simulator, or scan the Expo QR with Expo Go on your phone.
 
 ---
 
 ## Testing QR Ordering End-to-End
 
-1. Start both the backend and the web app.
-2. Open the staff app (or Expo dev build) on your computer or phone.
-3. Go to **Table Management** and create a table if none exist.
-4. Tap a table card → **View QR** to open the QR image.
-5. Scan the QR with your phone's camera — it opens the customer web app with the correct `?table=` and `?token=` params.
-6. Browse the menu, add items, and place an order.
-7. Back in the staff app, the order appears in the **Orders** board.
-8. As the cashier updates the order status, the customer's notification bell badge updates automatically.
+1. Find your machine's LAN IP — e.g. `10.10.10.232` on Windows: `ipconfig`, macOS/Linux: `ifconfig`
+2. Set `CUSTOMER_WEB_URL=http://YOUR_LAN_IP:5173` in `backend/.env`
+3. Set `VITE_API_URL=http://YOUR_LAN_IP:8000` in `web/.env`
+4. Start the backend (`python run.py`) and web app (`npm run dev` in `web/`)
+5. Open the staff app, go to **Table Management**, and create a table
+6. Tap a table card → **View QR** to see the QR code
+7. Scan the QR with your phone — it opens `http://YOUR_LAN_IP:5173/?table=X&token=...`
+8. Browse the menu, add items, choose Cash or QRIS, and place an order
+9. Back in the staff app the order appears on the **Orders** board
+10. Use the payment filter (Unpaid) to quickly find orders needing payment confirmation
+11. As kitchen status updates, the customer's bell badge lights up automatically
+
+---
+
+## Order Flow
+
+### Cash
+1. Customer selects Cash at checkout → order created with `payment_method=cash`, `is_paid=false`
+2. Staff sees amber **CASH · BAYAR KASIR** badge on the order card
+3. Kitchen progresses: New → Preparing → Ready → Served (independent of payment)
+4. Customer web shows kitchen status live (☕ preparing, 🎉 ready)
+5. Staff taps **Terima Kasir (Cash)** in order detail → `is_paid=true`
+6. Customer web payment status updates to **Lunas**
+
+### QRIS
+1. Customer scans QRIS inside checkout modal, taps **Saya Sudah Bayar** → order created with `payment_method=qris`, `is_paid=false`
+2. Staff sees red **QRIS · PERLU KONFIRMASI** badge; red banner appears at top of order board
+3. Staff checks bank/GoBiz merchant app for incoming transfer notification
+4. Staff taps **Konfirmasi QRIS** → `is_paid=true`
+5. Customer web polls every 3 s and detects the change → green confirmation banner + OS notification (if permitted)
 
 ---
 
@@ -232,16 +273,18 @@ Press `a` for Android emulator, `i` for iOS simulator, or scan the Expo QR code 
 | `DELETE` | `/tables/{id}` | Admin | Delete table |
 | `GET` | `/tables/{id}/qr` | Admin | Get table QR image (PNG) |
 | `POST` | `/order` | Public | Submit customer order |
-| `GET` | `/order` | Staff | List orders (with filters) |
-| `GET` | `/order/public/{id}` | Public | Get order status (for polling) |
-| `PATCH` | `/order/{id}/status` | Staff | Update order status |
-| `PATCH` | `/order/{id}/payment` | Staff | Mark order as paid |
+| `GET` | `/order` | Staff | List orders (status + active_only filters) |
+| `GET` | `/order/public/{id}` | Public | Get order status (customer polling) |
+| `GET` | `/order/{id}` | Staff | Get single order detail |
+| `PATCH` | `/order/{id}/status` | Staff | Update kitchen status |
+| `PATCH` | `/order/{id}/payment` | Staff | Confirm payment |
 | `GET` | `/reports/sales` | Admin | Sales report with date filters |
 | `GET` | `/staff` | Admin | List staff |
 | `POST` | `/staff` | Admin | Create staff account |
 | `DELETE` | `/staff/{id}` | Admin | Remove staff |
-| `GET` | `/settings/qris` | Public | Get QRIS merchant settings |
+| `GET` | `/settings/qris` | Public | Get QRIS image + merchant name |
 | `PUT` | `/settings/qris` | Admin | Update QRIS settings |
+| `PUT` | `/settings/merchant-name` | Admin | Update merchant name |
 
 ---
 
@@ -267,6 +310,72 @@ Press `a` for Android emulator, `i` for iOS simulator, or scan the Expo QR code 
 | `app/.env.example` | Template — safe to commit |
 | `web/.env` | Vite API URL — **never commit** |
 | `web/.env.example` | Template — safe to commit |
+
+---
+
+## Git Hooks
+
+This repo uses [Husky](https://typicode.github.io/husky) with [commitlint](https://commitlint.js.org) and [lint-staged](https://github.com/lint-staged/lint-staged). Hooks are installed automatically when you run `npm install` at the repo root.
+
+### pre-commit
+
+Runs `lint-staged` — only processes files you've staged:
+
+| Staged files | Action |
+|---|---|
+| `web/src/**/*.{ts,tsx}` | `oxlint --fix` |
+| `backend/**/*.py` | `ruff check --fix` |
+
+### commit-msg
+
+Enforces [Conventional Commits](https://www.conventionalcommits.org/). Format:
+
+```
+<type>(<optional scope>): <subject>
+```
+
+Valid types:
+
+| Type | When to use |
+|---|---|
+| `feat` | New feature |
+| `fix` | Bug fix |
+| `docs` | Documentation only |
+| `style` | Formatting, no logic change |
+| `refactor` | Code change that isn't a fix or feature |
+| `perf` | Performance improvement |
+| `test` | Adding or fixing tests |
+| `chore` | Build process, dependencies, tooling |
+| `revert` | Revert a previous commit |
+| `ci` | CI/CD config changes |
+
+**Valid examples:**
+```
+feat: add payment filter to orders board
+fix: remove duplicate Ionicons import in CartPanel
+chore: set up husky and commitlint
+docs: update README with order flow section
+feat(tables): add drag-to-dismiss settings sheet
+```
+
+**Blocked examples:**
+```
+update stuff          ✗  no type
+Fix: something        ✗  uppercase type
+feat:no space         ✗  missing space after colon
+```
+
+### Setup (first time)
+
+```bash
+# At the repo root — installs husky hooks automatically
+npm install
+```
+
+If hooks don't trigger, re-run:
+```bash
+npx husky
+```
 
 ---
 

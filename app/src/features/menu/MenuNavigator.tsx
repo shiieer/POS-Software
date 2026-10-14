@@ -1,20 +1,25 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useMenuManagement } from "./hooks/useMenuManagement";
 import AddMenuItemScreen from "./screens/AddMenuItemScreen";
 import MenuScreen from "./screens/MenuScreen";
 import { ManagedMenuItem } from "./types/menu";
 
-export default function MenuNavigator() {
+export type MenuNavigatorResetRef = React.MutableRefObject<(() => void) | null>;
+
+export default function MenuNavigator({ resetRef }: { resetRef?: MenuNavigatorResetRef }) {
 	const [adding, setAdding] = useState(false);
-	const [editingItem, setEditingItem] = useState<ManagedMenuItem | null>(
-		null,
-	);
+	const [editingItem, setEditingItem] = useState<ManagedMenuItem | null>(null);
 	const [successMessage, setSuccessMessage] = useState<string | null>(null);
 	const { existingCategories } = useMenuManagement();
 
-	function closeForm() {
+	const closeForm = useCallback(() => {
 		setAdding(false);
 		setEditingItem(null);
+	}, []);
+
+	// Expose reset so the tab navigator can call it on tab press
+	if (resetRef) {
+		resetRef.current = closeForm;
 	}
 
 	if (adding || editingItem) {

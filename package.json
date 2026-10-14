@@ -1,0 +1,25 @@
+{
+  "name": "pos-software",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "AFFO POS — monorepo root for Husky git hooks",
+  "scripts": {
+    "prepare": "husky",
+    "lint:web": "cd web && npx oxlint src",
+    "lint:app": "cd app && npx expo lint",
+    "typecheck:web": "cd web && npx tsc --noEmit",
+    "typecheck:app": "cd app && npx tsc --noEmit",
+    "lint:backend": "ruff check backend"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.10"
+  },
+  "lint-staged": {
+    "web/src/**/*.{ts,tsx}": "npx oxlint --fix",
+    "backend/**/*.py": "ruff check --fix"
+  }
+}

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ORDER_FILTERS } from "../constants/filters";
-import { Order, OrderFilter, ShiftMetrics } from "../types/order";
+import { Order, OrderFilter, PaymentFilter, ShiftMetrics } from "../types/order";
 import {
 	fetchOrdersApi,
 	updateOrderPaymentApi,
@@ -11,6 +11,7 @@ import { countOrdersByFilter, filterOrders, mapOrder } from "../utils/mapOrder";
 
 export function useOrders() {
 	const [selectedFilter, setSelectedFilter] = useState<OrderFilter>("All");
+	const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>("All");
 	const [orders, setOrders] = useState<Order[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [refreshing, setRefreshing] = useState(false);
@@ -48,10 +49,12 @@ export function useOrders() {
 		return () => clearInterval(pollInterval);
 	}, [loadOrders]);
 
-	const visibleOrders = useMemo(
-		() => filterOrders(orders, selectedFilter),
-		[orders, selectedFilter],
-	);
+	const visibleOrders = useMemo(() => {
+		const byStatus = filterOrders(orders, selectedFilter);
+		if (paymentFilter === "Unpaid") return byStatus.filter((o) => o.paymentStatus === "unpaid");
+		if (paymentFilter === "Paid")   return byStatus.filter((o) => o.paymentStatus === "paid");
+		return byStatus;
+	}, [orders, selectedFilter, paymentFilter]);
 
 	const counts = useMemo(() => countOrdersByFilter(orders), [orders]);
 
@@ -111,6 +114,8 @@ export function useOrders() {
 		filters: ORDER_FILTERS,
 		selectedFilter,
 		setSelectedFilter,
+		paymentFilter,
+		setPaymentFilter,
 		counts,
 		metrics,
 		orders: visibleOrders,

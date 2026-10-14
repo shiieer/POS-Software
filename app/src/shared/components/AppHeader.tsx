@@ -1,18 +1,9 @@
-import { useEffect, useState } from "react";
 import { View, Text } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { fetchQrisSettingApi } from "@/services/api/settings.api";
+import { useMerchantName } from "@/shared/hooks/useMerchantName";
 
 export default function AppHeader() {
-	const [merchantName, setMerchantName] = useState("POS System");
-
-	useEffect(() => {
-		fetchQrisSettingApi()
-			.then((setting) => {
-				if (setting.merchant_name?.trim()) setMerchantName(setting.merchant_name.trim());
-			})
-			.catch(() => undefined);
-	}, []);
+	const merchantName = useMerchantName();
 
 	return (
 		<View className="h-14 flex-row items-center justify-between border-b border-[#D8E3FB]/80 bg-white px-4 shadow-sm">

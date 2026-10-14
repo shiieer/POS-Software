@@ -1,11 +1,13 @@
 import { Pressable, View, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useMerchantName } from "@/shared/hooks/useMerchantName";
 
 type Props = {
 	onBack: () => void;
 };
 
 export default function StaffHeader({ onBack }: Props) {
+	const merchantName = useMerchantName();
 	return (
 		<View className="h-16 flex-row items-center justify-between border-b border-sky-100 bg-white/90 px-4">
 			<Pressable
@@ -21,7 +23,7 @@ export default function StaffHeader({ onBack }: Props) {
 				<View>
 					<View className="flex-row items-center gap-1.5">
 						<Text className="text-base font-bold tracking-tight text-slate-900">
-							Kedai Affo
+							{merchantName}
 						</Text>
 						<View className="rounded-md bg-sky-100/70 px-1.5 py-0.5">
 							<Text className="text-[10px] font-bold uppercase tracking-wider text-[#0284C7]">
@@ -34,9 +36,7 @@ export default function StaffHeader({ onBack }: Props) {
 					</Text>
 				</View>
 			</View>
-			<View className="h-9 w-9 items-center justify-center rounded-xl">
-				<Ionicons name="person-circle" size={22} color="#64748B" />
-			</View>
+			<View className="h-9 w-9" />
 		</View>
 	);
 }

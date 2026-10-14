@@ -1,5 +1,6 @@
+import { useRef } from "react";
 import { createBottomTabNavigator } from "expo-router/js-tabs";
-import { Text, View } from "react-native";
+import { Text, View, type ColorValue } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import { NewOrderScreen } from "@/features/new-order";
@@ -16,7 +17,7 @@ function TabIcon({
 	focused,
 }: {
 	name: keyof typeof Ionicons.glyphMap;
-	color: string;
+	color: ColorValue;
 	focused: boolean;
 }) {
 	return (
@@ -25,12 +26,14 @@ function TabIcon({
 				focused ? "bg-sky-50" : ""
 			}`}
 		>
-			<Ionicons name={name} color={color} size={22} />
+			<Ionicons name={name} color={color as string} size={22} />
 		</View>
 	);
 }
 
 export default function BottomTabNav() {
+	const menuResetRef = useRef<(() => void) | null>(null);
+
 	return (
 		<Tab.Navigator
 			initialRouteName="NewOrder"
@@ -98,7 +101,6 @@ export default function BottomTabNav() {
 
 			<Tab.Screen
 				name="Menu"
-				component={MenuNavigator}
 				options={{
 					tabBarIcon: ({ color, focused }) => (
 						<TabIcon
@@ -108,7 +110,14 @@ export default function BottomTabNav() {
 						/>
 					),
 				}}
-			/>
+				listeners={{
+					tabPress: () => {
+						menuResetRef.current?.();
+					},
+				}}
+			>
+				{() => <MenuNavigator resetRef={menuResetRef} />}
+			</Tab.Screen>
 
 			<Tab.Screen
 				name="More"

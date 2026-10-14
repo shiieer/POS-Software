@@ -39,15 +39,13 @@ export default function TableSettingsSheet({
 	const statusPosition = useRef(new Animated.Value(active ? 0 : 1)).current;
 	const [statusWidth, setStatusWidth] = useState(0);
 	const [statusHeight, setStatusHeight] = useState(0);
-	const statusGap = 12;
-	const liquidThickness = 14;
-	const statusButtonWidth = Math.max(0, (statusWidth - statusGap) / 2);
+	const statusButtonWidth = Math.max(0, (statusWidth - 4) / 2);
 
 	useEffect(() => {
 		Animated.timing(statusPosition, {
 			toValue: active ? 0 : 1,
-			duration: 500,
-			easing: Easing.inOut(Easing.cubic),
+			duration: 200,
+			easing: Easing.out(Easing.quad),
 			useNativeDriver: true,
 		}).start();
 	}, [active, statusPosition]);
@@ -108,73 +106,59 @@ export default function TableSettingsSheet({
 						<Text className="mb-2 text-[11px] font-bold tracking-widest text-slate-500">TABLE STATUS</Text>
 						<View
 							className="relative mb-5 h-12 flex-row gap-3"
-							onLayout={(event) => {
-								setStatusWidth(event.nativeEvent.layout.width);
-								setStatusHeight(event.nativeEvent.layout.height);
+							onLayout={(e) => {
+								setStatusWidth(e.nativeEvent.layout.width);
+								setStatusHeight(e.nativeEvent.layout.height);
 							}}
 						>
-							<View pointerEvents="none" className="absolute inset-0 flex-row gap-3">
-								<View className="flex-1 rounded-2xl bg-[#EEF2FF]" />
-								<View className="flex-1 rounded-2xl bg-[#EEF2FF]" />
-							</View>
-							<View
-								pointerEvents="none"
-								style={{
-									position: "absolute",
-									left: statusButtonWidth,
-									top: (statusHeight - 8) / 2,
-									width: statusGap,
-									height: 8,
-									borderRadius: 4,
-									backgroundColor: "#D9E2F5",
-								}}
-							/>
+							{/* Track background */}
+							<View className="absolute inset-0 rounded-2xl bg-[#EEF2FF]" />
+
+							{/* Sliding pill */}
 							<Animated.View
 								pointerEvents="none"
 								style={{
 									position: "absolute",
-									top: 0,
-									left: 0,
-									width: statusButtonWidth,
-									height: statusHeight,
-									borderRadius: 16,
+									top: 3,
+									left: 3,
+									width: statusButtonWidth - 3,
+									height: statusHeight - 6,
+									borderRadius: 14,
+									backgroundColor: "#FFFFFF",
 									borderWidth: 1,
 									borderColor: "#DCE4F2",
-									backgroundColor: "#FFFFFF",
-									transform: [
-										{
-											translateX: statusPosition.interpolate({
-												inputRange: [0, 1],
-												outputRange: [0, statusButtonWidth + statusGap],
-											}),
-										},
-										{
-											scaleX: statusPosition.interpolate({
-												inputRange: [0, 0.5, 1],
-											outputRange: [1, Math.min(1, liquidThickness / Math.max(1, statusButtonWidth)), 1],
-											}),
-										},
-										{
-											scaleY: statusPosition.interpolate({
-												inputRange: [0, 0.5, 1],
-											outputRange: [1, Math.min(1, liquidThickness / Math.max(1, statusHeight)), 1],
-											}),
-										},
-									],
+									transform: [{
+										translateX: statusPosition.interpolate({
+											inputRange: [0, 1],
+											outputRange: [0, statusButtonWidth],
+										}),
+									}],
 								}}
 							/>
-							<View className="absolute inset-0 flex-row gap-3">
+
+							{/* Labels */}
+							<View className="absolute inset-0 flex-row">
 								{([
-									{ active: true, label: "Active", icon: "radio-button-on" },
+									{ active: true,  label: "Active",      icon: "radio-button-on"   },
 									{ active: false, label: "Maintenance", icon: "construct-outline" },
 								] as const).map((option) => (
 									<Pressable
 										key={option.label}
 										onPress={() => onActiveChange(option.active)}
-										className="z-10 flex-1 flex-row items-center justify-center gap-2 rounded-2xl"
+										className="z-10 flex-1 flex-row items-center justify-center gap-2"
 									>
-										<Ionicons name={option.icon} size={16} color={active === option.active ? (option.active ? "#0284C7" : "#BE123C") : "#94A3B8"} />
-										<Text className={`text-xs font-bold ${active === option.active ? (option.active ? "text-[#0284C7]" : "text-rose-700") : "text-slate-500"}`}>
+										<Ionicons
+											name={option.icon}
+											size={15}
+											color={active === option.active
+												? option.active ? "#0284C7" : "#BE123C"
+												: "#94A3B8"}
+										/>
+										<Text className={`text-xs font-bold ${
+											active === option.active
+												? option.active ? "text-[#0284C7]" : "text-rose-700"
+												: "text-slate-400"
+										}`}>
 											{option.label}
 										</Text>
 									</Pressable>

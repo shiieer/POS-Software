@@ -41,6 +41,8 @@ export default function NewOrderScreen() {
 		name: string;
 		note?: string;
 	} | null>(null);
+	const [paymentMethod, setPaymentMethod] = useState<"cash" | "qris">("cash");
+	const [isPaid, setIsPaid] = useState(false);
 
 	const handleDecreaseFromMenu = (item: MenuItem) => {
 		decreaseItem(item.id);
@@ -75,7 +77,11 @@ export default function NewOrderScreen() {
 		onUpdateNote: updateItemNote,
 		onEditDetail: handleEditDetailFromCart,
 		onClear: clearCart,
-		onSubmit: submitOrder,
+		onSubmit: () => submitOrder(paymentMethod, isPaid),
+		paymentMethod,
+		isPaid,
+		onPaymentMethodChange: setPaymentMethod,
+		onIsPaidChange: setIsPaid,
 	};
 
 	const catalog = (

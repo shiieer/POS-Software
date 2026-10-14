@@ -128,7 +128,7 @@ export function useNewOrder() {
 		[cart],
 	);
 
-	const submitOrder = async () => {
+	const submitOrder = async (paymentMethod: "cash" | "qris" = "cash", isPaid = false) => {
 		if (cart.length === 0) return;
 
 		try {
@@ -138,6 +138,7 @@ export function useNewOrder() {
 			await createOrderApi({
 				table_id: null,
 				customer_name: "Walk-in",
+				payment_method: paymentMethod,
 				items: cart.map((item) => ({
 					menu_item_id: item.menuItemId,
 					quantity: item.quantity,
@@ -146,7 +147,11 @@ export function useNewOrder() {
 			});
 
 			setCart([]);
-			setSuccessMessage("Order submitted successfully");
+			setSuccessMessage(
+				isPaid
+					? `Order created · ${paymentMethod.toUpperCase()} paid`
+					: "Order created · pending payment",
+			);
 		} catch (err) {
 			setError(getErrorMessage(err, "Failed to submit order"));
 		} finally {

@@ -1,6 +1,18 @@
-export type OrderFilter = "All" | "New" | "Preparing" | "Ready" | "Served" | "Canceled";
+export type OrderFilter =
+	| "All"
+	| "New"
+	| "Preparing"
+	| "Ready"
+	| "Served"
+	| "Canceled";
+export type PaymentFilter = "All" | "Unpaid" | "Paid";
 
-export type OrderStatus = "new" | "preparing" | "ready" | "served" | "cancelled";
+export type OrderStatus =
+	| "new"
+	| "preparing"
+	| "ready"
+	| "served"
+	| "cancelled";
 
 export type PaymentStatus = "paid" | "unpaid";
 

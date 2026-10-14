@@ -1,4 +1,4 @@
-﻿import { JSX, useState } from "react";
+﻿import { JSX, useState, useRef } from "react";
 import { View, Pressable, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -20,16 +20,26 @@ const TABS: {
 	{ key: "More", label: "More", icon: "ellipsis-horizontal" },
 ];
 
-const SCREEN_MAP: Record<SideTabKey, () => JSX.Element> = {
-	Orders: OrdersNavigator,
-	NewOrder: NewOrderScreen,
-	Menu: MenuNavigator,
-	More: MoreNavigator,
-};
-
 export default function SideRailNav() {
 	const [activeTab, setActiveTab] = useState<SideTabKey>("NewOrder");
-	const ActiveScreen = SCREEN_MAP[activeTab];
+	const menuResetRef = useRef<(() => void) | null>(null);
+
+	function handleTabPress(key: SideTabKey) {
+		if (key === "Menu" && activeTab === "Menu") {
+			// Already on Menu — reset to the list
+			menuResetRef.current?.();
+		}
+		setActiveTab(key);
+	}
+
+	function renderScreen() {
+		switch (activeTab) {
+			case "Orders":   return <OrdersNavigator />;
+			case "NewOrder": return <NewOrderScreen />;
+			case "Menu":     return <MenuNavigator resetRef={menuResetRef} />;
+			case "More":     return <MoreNavigator />;
+		}
+	}
 
 	return (
 		<SafeAreaView className="flex-1 flex-row bg-[#F0F5FA]">
@@ -38,29 +48,16 @@ export default function SideRailNav() {
 					<View className="gap-1.5">
 						{TABS.filter((tab) => tab.key !== "More").map((tab) => {
 							const isActive = tab.key === activeTab;
-
 							return (
 								<Pressable
 									key={tab.key}
-									onPress={() => setActiveTab(tab.key)}
+									onPress={() => handleTabPress(tab.key)}
 									className={`flex-row items-center gap-3 rounded-xl px-3.5 py-2.5 ${
-										isActive
-											? "border border-[#BFC7D2]/60 bg-white shadow-sm"
-											: ""
+										isActive ? "border border-[#BFC7D2]/60 bg-white shadow-sm" : ""
 									}`}
 								>
-									<Ionicons
-										name={tab.icon}
-										size={20}
-										color={isActive ? "#0284C7" : "#707881"}
-									/>
-									<Text
-										className={`text-sm ${
-											isActive
-												? "font-bold text-[#006194]"
-												: "font-semibold text-[#3F4850]"
-										}`}
-									>
+									<Ionicons name={tab.icon} size={20} color={isActive ? "#0284C7" : "#707881"} />
+									<Text className={`text-sm ${isActive ? "font-bold text-[#006194]" : "font-semibold text-[#3F4850]"}`}>
 										{tab.label}
 									</Text>
 								</Pressable>
@@ -69,29 +66,16 @@ export default function SideRailNav() {
 					</View>
 					{TABS.filter((tab) => tab.key === "More").map((tab) => {
 						const isActive = tab.key === activeTab;
-
 						return (
 							<Pressable
 								key={tab.key}
-								onPress={() => setActiveTab(tab.key)}
+								onPress={() => handleTabPress(tab.key)}
 								className={`flex-row items-center gap-3 rounded-xl px-3.5 py-2.5 ${
-									isActive
-										? "border border-[#BFC7D2]/60 bg-white shadow-sm"
-										: ""
+									isActive ? "border border-[#BFC7D2]/60 bg-white shadow-sm" : ""
 								}`}
 							>
-								<Ionicons
-									name={tab.icon}
-									size={20}
-									color={isActive ? "#0284C7" : "#707881"}
-								/>
-								<Text
-									className={`text-sm ${
-										isActive
-											? "font-bold text-[#006194]"
-											: "font-semibold text-[#3F4850]"
-									}`}
-								>
+								<Ionicons name={tab.icon} size={20} color={isActive ? "#0284C7" : "#707881"} />
+								<Text className={`text-sm ${isActive ? "font-bold text-[#006194]" : "font-semibold text-[#3F4850]"}`}>
 									{tab.label}
 								</Text>
 							</Pressable>
@@ -101,7 +85,7 @@ export default function SideRailNav() {
 			</View>
 
 			<View className="flex-1">
-				<ActiveScreen />
+				{renderScreen()}
 			</View>
 		</SafeAreaView>
 	);
