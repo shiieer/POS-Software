@@ -1,9 +1,9 @@
-import axios from "axios";
+import { create } from "axios";
 import { API_BASE_URL } from "@/constants/api";
 import { clearToken, getToken } from "../storage/tokenStorage";
 import { notifyUnauthorized } from "../auth/session";
 
-export const api = axios.create({
+export const api = create({
 	baseURL: API_BASE_URL,
 	timeout: 15000,
 	headers: {

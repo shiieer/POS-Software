@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.orm import Session, joinedload
 
@@ -12,7 +12,7 @@ def _naive(dt: datetime | None) -> datetime | None:
     if dt is None:
         return None
     if dt.tzinfo is not None:
-        return dt.astimezone(timezone.utc).replace(tzinfo=None)
+        return dt.astimezone(UTC).replace(tzinfo=None)
     return dt
 
 
@@ -28,7 +28,7 @@ def _sales_over_time(
     start_date: datetime | None,
     end_date: datetime | None,
 ) -> list[SalesPoint]:
-    range_end = _naive(end_date) or datetime.now(timezone.utc).replace(tzinfo=None)
+    range_end = _naive(end_date) or datetime.now(UTC).replace(tzinfo=None)
     range_start = _naive(start_date)
     if range_start is None:
         range_start = (range_end - timedelta(days=6)).replace(

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useMenuManagement } from "./hooks/useMenuManagement";
 import AddMenuItemScreen from "./screens/AddMenuItemScreen";
 import MenuScreen from "./screens/MenuScreen";

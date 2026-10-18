@@ -1,4 +1,4 @@
-﻿import { clearToken } from "@/services/storage/tokenStorage";
+import { clearToken } from "@/services/storage/tokenStorage";
 
 type Listener = () => void;
 

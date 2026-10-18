@@ -1,4 +1,4 @@
-﻿import { FlatList, Text, View } from "react-native";
+import { FlatList, Text, View } from "react-native";
 import { GRID } from "@/constants/layout";
 import { useGridColumns } from "@/shared/hooks/useGridColumns";
 import { MenuItem } from "@/types/menu";

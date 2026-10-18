@@ -40,7 +40,7 @@ def update_user(
         raise HTTPException(status_code=404, detail="User not found")
 
     data = payload.model_dump(exclude_unset=True)
-    if "password" in data and data["password"]:
+    if data.get("password"):
         user.hashed_password = hash_password(data.pop("password"))
     for key, value in data.items():
         setattr(user, key, value)

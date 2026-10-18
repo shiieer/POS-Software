@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { fetchMenuApi } from "@/services/api/menu.api";
 import { createOrderApi } from "@/services/api/order.api";
 import { MenuItem } from "@/types/menu";

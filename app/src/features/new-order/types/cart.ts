@@ -1,4 +1,4 @@
-﻿export type CartItem = {
+export type CartItem = {
 	menuItemId: number;
 	name: string;
 	price: number;

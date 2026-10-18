@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 import {
 	clearToken,
 	getToken,
-	saveToken,
 } from "@/services/storage/tokenStorage";
 import { onUnauthorized } from "@/services/auth/session";
 import { fetchMenuApi } from "@/services/api/menu.api";

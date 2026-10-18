@@ -77,3 +77,34 @@ def test_root_endpoint(client):
     data = response.json()
     assert "message" in data
     assert data["docs"] == "/docs"
+
+
+def test_login_inactive_user(client, db_session):
+    from app.core.security import hash_password
+    from app.models.user import User, UserRole
+
+    user = User(
+        username="inactive_user",
+        hashed_password=hash_password("pass123"),
+        role=UserRole.STAFF,
+        is_active=False,
+    )
+    db_session.add(user)
+    db_session.commit()
+
+    response = client.post(
+        "/auth/login",
+        json={"username": "inactive_user", "password": "pass123"},
+    )
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "User account is inactive"
+
+
+def test_get_active_staff_returns_list(client, admin_headers, staff_user):
+    response = client.get("/auth/staff", headers=admin_headers)
+
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
+    usernames = [u["username"] for u in response.json()]
+    assert staff_user.username in usernames

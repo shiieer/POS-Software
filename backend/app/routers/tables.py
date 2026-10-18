@@ -2,13 +2,13 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.core.qr import (
     build_menu_url,
-    generator_qr_token,
     generate_qr_data_uri,
     generate_qr_png,
+    generator_qr_token,
 )
-from app.config import settings
 from app.core.storage import delete_file
 from app.dependencies import AdminUser, DbSession
 from app.models.order import Order

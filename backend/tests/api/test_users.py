@@ -32,3 +32,72 @@ def test_create_user_requires_admin(client, staff_headers):
     )
 
     assert response.status_code == 403
+
+
+def test_get_users_returns_list(client, admin_headers):
+    response = client.get("/users", headers=admin_headers)
+
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
+    # admin user is always seeded
+    assert any(u["role"] == "admin" for u in response.json())
+
+
+def test_get_users_requires_admin(client, staff_headers):
+    response = client.get("/users", headers=staff_headers)
+
+    assert response.status_code == 403
+
+
+def test_update_user_deactivate(client, admin_headers, staff_user):
+    response = client.patch(
+        f"/users/{staff_user.id}",
+        headers=admin_headers,
+        json={"is_active": False},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["is_active"] is False
+
+
+def test_update_user_role(client, admin_headers, staff_user):
+    response = client.patch(
+        f"/users/{staff_user.id}",
+        headers=admin_headers,
+        json={"role": "admin"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["role"] == "admin"
+
+
+def test_update_user_password(client, admin_headers, staff_user):
+    response = client.patch(
+        f"/users/{staff_user.id}",
+        headers=admin_headers,
+        json={"password": "newpassword123"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["username"] == staff_user.username
+
+
+def test_update_user_not_found(client, admin_headers):
+    response = client.patch(
+        "/users/99999",
+        headers=admin_headers,
+        json={"username": "ghost"},
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "User not found"
+
+
+def test_update_user_requires_admin(client, staff_headers, staff_user):
+    response = client.patch(
+        f"/users/{staff_user.id}",
+        headers=staff_headers,
+        json={"username": "hacker"},
+    )
+
+    assert response.status_code == 403

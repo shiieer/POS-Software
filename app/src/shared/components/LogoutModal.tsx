@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { Modal, Pressable, Text, View, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { logoutUser } from "@/services/auth/session";

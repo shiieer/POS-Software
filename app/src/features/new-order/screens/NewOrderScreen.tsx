@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { ActivityIndicator, Text, View } from "react-native";
 import ScreenContainer from "@/shared/components/ScreenContainer";
 import CategoryFilter from "../components/CategoryFilter";

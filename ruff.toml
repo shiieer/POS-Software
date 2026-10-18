@@ -1,0 +1,7 @@
+# Ruff configuration
+line-length = 88
+target-version = "py312"
+
+[lint]
+# Ignore SQLAlchemy string model forward references (F821) and FastAPI dependencies in defaults (B008)
+ignore = ["F821", "B008"]

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from tests.helpers.factories import create_menu_item_db, create_order_payload
 
@@ -53,7 +53,7 @@ def test_sales_report_with_date_filters(
         json={"payment_method": "cash", "is_paid": True},
     )
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     start = (now - timedelta(days=1)).isoformat()
     end = (now + timedelta(days=1)).isoformat()
 

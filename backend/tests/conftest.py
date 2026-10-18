@@ -134,5 +134,6 @@ def mock_supabase_storage(monkeypatch):
     monkeypatch.setattr("app.routers.menu.upload_bytes", fake_upload_bytes)
     monkeypatch.setattr("app.routers.menu.delete_file", fake_delete_file)
     monkeypatch.setattr("app.routers.settings.upload_bytes", fake_upload_bytes)
+    monkeypatch.setattr("app.routers.tables.delete_file", fake_delete_file)
 
     return {"uploaded": uploaded, "deleted": deleted}

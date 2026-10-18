@@ -1,4 +1,4 @@
-import axios from "axios";
+import { isAxiosError } from "axios";
 import { API_BASE_URL } from "@/constants/api";
 
 export const ALL_ITEMS = "All Items";
@@ -54,7 +54,7 @@ export function getErrorMessage(
 	err: unknown,
 	fallback = "Something went wrong",
 ) {
-	if (axios.isAxiosError(err)) {
+	if (isAxiosError(err)) {
 		const detail = err.response?.data?.detail;
 		if (typeof detail === "string") return detail;
 		return err.message;
