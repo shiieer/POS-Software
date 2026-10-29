@@ -18,7 +18,6 @@ function resolveApiBase() {
 				return configured.toString().replace(/\/$/, "");
 			}
 		} catch {
-			// Use the current host as the local development API host below.
 		}
 	}
 	if (configuredApiUrl) return configuredApiUrl;
@@ -65,6 +64,21 @@ export const api = {
 		request<import("../types").OrderOut>(`/order/public/${orderId}`, {
 			cache: "no-store",
 		}),
+
+	uploadPaymentProof: (orderId: number, file: File) => {
+		const form = new FormData();
+		form.append("file", file);
+		return fetch(`${API_BASE}/order/${orderId}/payment-proof`, {
+			method: "POST",
+			body: form,
+		}).then(async (res) => {
+			if (!res.ok) {
+				const body = await res.json().catch(() => ({}));
+				throw new Error(body.detail || `Upload failed: ${res.status}`);
+			}
+			return res.json() as Promise<import("../types").OrderOut>;
+		});
+	},
 
 	getQrisSetting: () =>
 		request<{ qris_image_url: string; merchant_name: string }>("/settings/qris"),

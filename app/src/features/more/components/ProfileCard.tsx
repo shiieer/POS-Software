@@ -48,7 +48,7 @@ export default function ProfileCard({ onEditProfile }: Props) {
 						</View>
 					</View>
 					<Text className="mt-0.5 text-xs font-medium text-slate-500">
-						{user ? `@${user.username}` : ""}
+						{user ? `@${user.username}${user.account_code ? ` • ID: ${user.account_code}` : ""}` : ""}
 					</Text>
 				</View>
 			</View>

@@ -41,6 +41,7 @@ export function mapOrder(api: OrderApi): Order {
 		status,
 		paymentStatus: api.is_paid ? "paid" : "unpaid",
 		paymentMethod,
+		paymentProofUrl: api.payment_proof_url ?? null,
 		locationType: isTable ? "table" : "to-go",
 		locationLabel: api.table_name ?? api.customer_name ?? "To-Go",
 		elapsedSeconds,

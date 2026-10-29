@@ -38,6 +38,7 @@ export type Order = {
 	status: OrderStatus;
 	paymentStatus: PaymentStatus;
 	paymentMethod: PaymentMethodType;
+	paymentProofUrl?: string | null;
 	locationType: OrderLocationType;
 	locationLabel: string;
 	elapsedSeconds: number;

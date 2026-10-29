@@ -1,4 +1,6 @@
-import { View, Text } from "react-native";
+import { useState } from "react";
+import { View, Text, Image, Modal, Pressable } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { formatRp, formatTime, formatWait } from "@/utils";
 import { Order } from "../types/order";
 
@@ -28,6 +30,7 @@ export default function OrderDetailInfoCard({
 	elapsedSecond,
 	isUrgent,
 }: Props) {
+	const [showProofModal, setShowProofModal] = useState(false);
 	const subtotal = order.items.reduce((sum, item) => sum + item.subtotal, 0);
 
 	return (
@@ -86,6 +89,40 @@ export default function OrderDetailInfoCard({
 				</Text>
 			</Row>
 
+			{order.paymentProofUrl ? (
+				<View className="my-2 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-3 dark:border-emerald-800 dark:bg-emerald-950/40">
+					<View className="mb-2 flex-row items-center justify-between">
+						<View className="flex-row items-center gap-1.5">
+							<Ionicons name="receipt-outline" size={16} color="#059669" />
+							<Text className="text-xs font-bold text-emerald-900 dark:text-emerald-200">
+								Bukti Pembayaran QRIS
+							</Text>
+						</View>
+						<Pressable
+							onPress={() => setShowProofModal(true)}
+							className="flex-row items-center gap-1 rounded-full bg-emerald-600 px-2.5 py-1"
+						>
+							<Ionicons name="expand" size={12} color="#FFFFFF" />
+							<Text className="text-[11px] font-bold text-white">Perbesar</Text>
+						</Pressable>
+					</View>
+					<Pressable
+						onPress={() => setShowProofModal(true)}
+						className="h-48 w-full overflow-hidden rounded-xl border border-emerald-200 bg-white dark:border-emerald-900 dark:bg-slate-900"
+					>
+						<Image
+							source={{ uri: order.paymentProofUrl }}
+							className="h-full w-full"
+							resizeMode="contain"
+						/>
+					</Pressable>
+				</View>
+			) : order.paymentMethod === "qris" ? (
+				<Row label="Bukti QRIS">
+					<Text className="text-xs italic text-slate-400">Belum diunggah pelanggan</Text>
+				</Row>
+			) : null}
+
 			<View className="my-3 border-t border-brand-border dark:border-slate-800" />
 
 			<Row label="Subtotal">
@@ -104,6 +141,32 @@ export default function OrderDetailInfoCard({
 					{formatRp(order.totalAmount)}
 				</Text>
 			</View>
+
+			<Modal
+				visible={showProofModal}
+				transparent
+				animationType="fade"
+				onRequestClose={() => setShowProofModal(false)}
+			>
+				<View className="flex-1 items-center justify-center bg-black/90 p-4">
+					<View className="relative w-full max-w-lg items-center">
+						<Pressable
+							onPress={() => setShowProofModal(false)}
+							className="mb-3 self-end flex-row items-center gap-1 rounded-full bg-white/20 px-3 py-1.5"
+						>
+							<Ionicons name="close" size={18} color="#FFFFFF" />
+							<Text className="text-xs font-bold text-white">Tutup</Text>
+						</Pressable>
+						{order.paymentProofUrl && (
+							<Image
+								source={{ uri: order.paymentProofUrl }}
+								className="h-[75vh] w-full rounded-2xl"
+								resizeMode="contain"
+							/>
+						)}
+					</View>
+				</View>
+			</Modal>
 		</View>
 	);
 }

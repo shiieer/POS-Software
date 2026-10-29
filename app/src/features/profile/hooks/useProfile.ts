@@ -78,5 +78,9 @@ export function useProfile() {
 		};
 	}, [user, ordersToday]);
 
-	return { profile, loading, error, reload: load };
+	function updateUser(updated: UserApi) {
+		setUser(updated);
+	}
+
+	return { profile, loading, error, reload: load, updateUser };
 }

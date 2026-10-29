@@ -8,4 +8,5 @@ export type TokenResponse = {
 	token_type: string;
 	role: "admin" | "staff";
 	username: string;
+	account_code?: string;
 };

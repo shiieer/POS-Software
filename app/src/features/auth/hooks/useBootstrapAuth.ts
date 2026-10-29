@@ -4,7 +4,7 @@ import {
 	getToken,
 } from "@/services/storage/tokenStorage";
 import { onUnauthorized } from "@/services/auth/session";
-import { fetchMenuApi } from "@/services/api/menu.api";
+import { fetchMeApi } from "@/services/api/auth.api";
 
 export function useBootstrapAuth() {
 	const [ready, setReady] = useState(false);
@@ -19,7 +19,7 @@ export function useBootstrapAuth() {
 		}
 
 		try {
-			await fetchMenuApi();
+			await fetchMeApi();
 			setAuthenticated(true);
 		} catch {
 			await clearToken();

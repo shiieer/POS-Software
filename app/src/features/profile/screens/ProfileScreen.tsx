@@ -7,6 +7,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import ScreenContainer from "@/shared/components/ScreenContainer";
+import { useMerchantName } from "@/shared/hooks/useMerchantName";
 import { useProfile } from "../hooks/useProfile";
 import ProfileAvatarCard from "../components/ProfileAvatarCard";
 import ProfileInfoRow from "../components/ProfileInfoRow";
@@ -17,7 +18,8 @@ type Props = {
 };
 
 export default function ProfileScreen({ onBack }: Props) {
-	const { profile, loading, error } = useProfile();
+	const merchantName = useMerchantName();
+	const { profile, loading, error, updateUser } = useProfile();
 
 	return (
 		<ScreenContainer showHeader={false}>
@@ -32,7 +34,7 @@ export default function ProfileScreen({ onBack }: Props) {
 
 				<View className="items-center">
 					<Text className="text-[10px] font-bold uppercase tracking-widest text-[#0284c7]">
-						Kedai Affo • POS
+						{merchantName} • POS
 					</Text>
 					<Text className="text-base font-bold text-slate-800">My Profile</Text>
 				</View>
@@ -56,7 +58,7 @@ export default function ProfileScreen({ onBack }: Props) {
 					contentContainerClassName="gap-4 px-4 py-5 pb-10"
 					showsVerticalScrollIndicator={false}
 				>
-					<ProfileAvatarCard profile={profile} />
+					<ProfileAvatarCard profile={profile} onAvatarUpdated={updateUser} />
 
 					<SectionCard
 						icon="id-card-outline"
@@ -86,7 +88,7 @@ export default function ProfileScreen({ onBack }: Props) {
 						<View className="border-b border-slate-100">
 							<ProfileInfoRow
 								label="Account ID"
-								value={String(profile.user.id)}
+								value={profile.user.account_code || String(profile.user.id)}
 								mono
 								badge={{
 									label: profile.user.is_active ? "Active" : "Inactive",

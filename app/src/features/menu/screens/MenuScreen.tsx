@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
 	ActivityIndicator,
 	FlatList,
@@ -12,8 +13,10 @@ import MenuManagementHeader from "../components/MenuManagementHeader";
 import MenuCategoryFilter from "../components/MenuCategoryFilter";
 import MenuSearchBanner from "../components/MenuSearchBanner";
 import MenuItemCard from "../components/MenuItemCard";
+import DeleteMenuItemModal from "../components/DeleteMenuItemModal";
 import { ManagedMenuItem } from "../types/menu";
 import Toast from "@/shared/components/Toast";
+import { getErrorMessage } from "@/utils";
 
 type Props = {
 	onAddItem: () => void;
@@ -39,7 +42,30 @@ export default function MenuScreen({
 		loading,
 		error,
 		toggleAvailability,
+		deleteMenuItem,
 	} = useMenuManagement();
+
+	const [deleteTarget, setDeleteTarget] = useState<ManagedMenuItem | null>(null);
+	const [deleting, setDeleting] = useState(false);
+	const [deleteError, setDeleteError] = useState<string | null>(null);
+	const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+	const handleConfirmDelete = async () => {
+		if (!deleteTarget) return;
+		try {
+			setDeleting(true);
+			setDeleteError(null);
+			await deleteMenuItem(deleteTarget.id);
+			setToastMsg("Menu item deleted successfully");
+			setDeleteTarget(null);
+		} catch (err) {
+			setDeleteError(
+				getErrorMessage(err, "Failed to delete menu item"),
+			);
+		} finally {
+			setDeleting(false);
+		}
+	};
 
 	return (
 		<ScreenContainer>
@@ -90,11 +116,15 @@ export default function MenuScreen({
 								featured={index === 0 && item.isAvailable}
 								onPress={() => onEditItem(item)}
 								onToggle={toggleAvailability}
+								onDelete={(target) => {
+									setDeleteError(null);
+									setDeleteTarget(target);
+								}}
 							/>
 						)}
 					/>
 
-					<Toast message={successMessage ?? null} type="success" />
+					<Toast message={toastMsg ?? successMessage ?? null} type="success" />
 
 					<Pressable
 						onPress={onAddItem}
@@ -103,6 +133,17 @@ export default function MenuScreen({
 					>
 						<Ionicons name="add" size={30} color="#FFFFFF" />
 					</Pressable>
+
+					<DeleteMenuItemModal
+						item={deleteTarget}
+						loading={deleting}
+						errorMessage={deleteError}
+						onCancel={() => {
+							setDeleteTarget(null);
+							setDeleteError(null);
+						}}
+						onConfirm={handleConfirmDelete}
+					/>
 				</View>
 			)}
 		</ScreenContainer>

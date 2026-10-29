@@ -13,3 +13,4 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
     role: UserRole
     username: str
+    account_code: str | None = None

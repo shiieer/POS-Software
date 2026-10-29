@@ -24,6 +24,7 @@ export type OrderApi = {
 	is_paid: boolean;
 	payment_method?: "cash" | "qris" | "other" | null;
 	paymeny_method?: string | null;
+	payment_proof_url?: string | null;
 	notes: string | null;
 	total_amount: number;
 	created_at: string;

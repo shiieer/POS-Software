@@ -13,6 +13,7 @@ import { getOrderCardTheme } from "../utils/orderCardTheme";
 type Props = {
 	order: Order;
 	onPress: () => void;
+	onConfirmPayment?: (orderId: number) => void;
 	onStartPreparing: (orderId: number) => void;
 	onPrint: (orderId: number) => void;
 	onMarkReady: (orderId: number) => void;
@@ -24,6 +25,7 @@ type Props = {
 export default function OrderCard({
 	order,
 	onPress,
+	onConfirmPayment,
 	onStartPreparing,
 	onPrint,
 	onMarkReady,
@@ -40,6 +42,10 @@ export default function OrderCard({
 		isComplete ? order.updatedAt : now,
 	);
 	const showBag = order.locationType === "to-go";
+	const needsPaymentConfirm =
+		order.paymentMethod === "qris" &&
+		order.paymentStatus === "unpaid" &&
+		order.status !== "cancelled";
 
 	useEffect(() => {
 		const timer = setInterval(() => setNow(Date.now()), 1000);
@@ -132,6 +138,15 @@ export default function OrderCard({
 					</View>
 				) : null}
 
+				{order.paymentProofUrl ? (
+					<View className="mb-2 flex-row items-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50 px-2.5 py-1.5 dark:border-emerald-800 dark:bg-emerald-950/60">
+						<Ionicons name="image-outline" size={14} color="#059669" />
+						<Text className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300">
+							Bukti QRIS Terlampir
+						</Text>
+					</View>
+				) : null}
+
 				{isLandscape ? (
 					<ScrollView
 						className="my-0.5 flex-1"
@@ -150,6 +165,8 @@ export default function OrderCard({
 							status={order.status}
 							primaryClass={theme.primary}
 							primaryTextClass={theme.primaryText}
+							needsPaymentConfirm={needsPaymentConfirm}
+							onConfirmPayment={() => onConfirmPayment?.(order.id)}
 							onStartPreparing={() => onStartPreparing(order.id)}
 							onPrint={() => onPrint(order.id)}
 							onMarkReady={() => onMarkReady(order.id)}

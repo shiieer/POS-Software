@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
 	ActivityIndicator,
 	KeyboardAvoidingView,
@@ -15,6 +16,7 @@ import PhotoPickerField from "../components/PhotoPickerField";
 import FormTextField from "../components/FormTextField";
 import CategoryPicker from "../components/CategoryPicker";
 import AvailabilityRow from "../components/AvailabilityRow";
+import DeleteMenuItemModal from "../components/DeleteMenuItemModal";
 import { ManagedMenuItem } from "../types/menu";
 
 type Props = {
@@ -22,6 +24,7 @@ type Props = {
 	existingCategories: string[];
 	onClose: () => void;
 	onSaved: () => void;
+	onDeleted?: () => void;
 };
 
 export default function AddMenuItemScreen({
@@ -29,24 +32,38 @@ export default function AddMenuItemScreen({
 	existingCategories,
 	onClose,
 	onSaved,
+	onDeleted,
 }: Props) {
 	const {
 		form,
 		categories,
 		saving,
+		deleting,
 		error,
 		fieldErrors,
 		isEditing,
 		setField,
 		selectCategory,
 		submit,
+		deleteItem,
 	} = useAddMenuItem(existingCategories, onSaved, item);
+
+	const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+	const handleConfirmDelete = async () => {
+		const success = await deleteItem();
+		if (success) {
+			setShowDeleteModal(false);
+			onDeleted?.();
+		}
+	};
 
 	return (
 		<ScreenContainer showHeader={false}>
 			<AddItemHeader
 				title={isEditing ? "Edit Item" : "Add New Item"}
 				onClose={onClose}
+				onDelete={isEditing ? () => setShowDeleteModal(true) : undefined}
 			/>
 
 			<KeyboardAvoidingView
@@ -104,6 +121,19 @@ export default function AddMenuItemScreen({
 						}
 					/>
 
+					{isEditing ? (
+						<Pressable
+							onPress={() => setShowDeleteModal(true)}
+							disabled={saving || deleting}
+							className="mt-2 h-[50px] flex-row items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 active:bg-rose-100 dark:border-rose-900/60 dark:bg-rose-950/60"
+						>
+							<Ionicons name="trash-outline" size={19} color="#E11D48" />
+							<Text className="text-sm font-bold text-rose-600 dark:text-rose-400">
+								Delete Menu Item
+							</Text>
+						</Pressable>
+					) : null}
+
 					{error ? (
 						<Text className="text-center text-red-500">{error}</Text>
 					) : null}
@@ -112,7 +142,7 @@ export default function AddMenuItemScreen({
 				<View className="border-t border-sky-100 bg-white/90 p-4">
 					<Pressable
 						onPress={submit}
-						disabled={saving}
+						disabled={saving || deleting}
 						className="h-[52px] flex-row items-center justify-center gap-2 rounded-2xl bg-[#0284C7]"
 						style={{
 							shadowColor: "#0284C7",
@@ -139,6 +169,14 @@ export default function AddMenuItemScreen({
 					</Pressable>
 				</View>
 			</KeyboardAvoidingView>
+
+			<DeleteMenuItemModal
+				item={showDeleteModal && item ? item : null}
+				loading={deleting}
+				errorMessage={error}
+				onCancel={() => setShowDeleteModal(false)}
+				onConfirm={handleConfirmDelete}
+			/>
 		</ScreenContainer>
 	);
 }

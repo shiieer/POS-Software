@@ -1,6 +1,7 @@
-import { Pressable, Switch, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { MoreItem } from "../types/more";
+import AvailabilitySwitch from "@/features/menu/components/AvailabilitySwitch";
 
 type Props = {
 	item: MoreItem;
@@ -14,15 +15,23 @@ export default function MoreOption({
 	item,
 	isLast,
 	onPress,
-	toggleValue,
+	toggleValue = false,
 	onToggle,
 }: Props) {
 	const iconColor = item.iconColor ?? (item.danger ? "#E11D48" : "#0284C7");
 	const iconBg = item.iconBg ?? (item.danger ? "bg-rose-50" : "bg-sky-50");
 
+	function handleRowPress() {
+		if (item.showToggle && onToggle) {
+			onToggle(!toggleValue);
+			return;
+		}
+		onPress();
+	}
+
 	return (
 		<Pressable
-			onPress={onPress}
+			onPress={handleRowPress}
 			className={`flex-row items-center bg-white px-3.5 py-3.5 ${isLast ? "" : "border-b border-slate-100"}`}
 		>
 			<View
@@ -45,15 +54,11 @@ export default function MoreOption({
 				</View>
 			) : null}
 			{item.showToggle ? (
-				<View onStartShouldSetResponder={() => true}>
-					<Switch
-						value={toggleValue}
-						onValueChange={onToggle}
-						trackColor={{ false: "#CBD5E1", true: "#0284C7" }}
-						thumbColor="#FFFFFF"
-						ios_backgroundColor="#CBD5E1"
-					/>
-				</View>
+				<AvailabilitySwitch
+					value={toggleValue}
+					onValueChange={onToggle ?? (() => {})}
+					activeColor="#0284C7"
+				/>
 			) : (
 				<Ionicons
 					name="chevron-forward"

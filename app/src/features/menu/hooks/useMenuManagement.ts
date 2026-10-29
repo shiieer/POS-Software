@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ALL_ITEMS, AvailabilityFilter, ManagedMenuItem } from "../types/menu";
-import { fetchMenuApi, updateMenuItemApi } from "@/services/api/menu.api";
+import {
+	deleteMenuItemApi,
+	fetchMenuApi,
+	updateMenuItemApi,
+} from "@/services/api/menu.api";
 import { getMenuCategories, mapManagedMenuItem } from "../utils/mapMenuItem";
 import { getErrorMessage } from "@/utils";
 
@@ -99,6 +103,11 @@ export function useMenuManagement() {
 		}
 	};
 
+	const deleteMenuItem = async (itemId: number) => {
+		await deleteMenuItemApi(itemId);
+		await loadMenu();
+	};
+
 	return {
 		items: filteredItems,
 		stats,
@@ -114,5 +123,6 @@ export function useMenuManagement() {
 		error,
 		refresh: loadMenu,
 		toggleAvailability,
+		deleteMenuItem,
 	};
 }

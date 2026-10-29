@@ -3,6 +3,7 @@ import { formatCurrency } from "../utils/formatCurrency";
 import QrisImage from "./QrisImage";
 import OrderDetailModal from "./OrderDetailModal";
 import CustomerNotificationCenter from "./CustomerNotificationCenter";
+import PaymentProofUpload from "./PaymentProofUpload";
 import type { useCustomerOrderNotifications } from "../hooks/useCustomerOrderNotifications";
 import type { OrderOut } from "../types";
 
@@ -17,6 +18,7 @@ export default function OrderSuccess({ order: initialOrder, onNewOrder, qrisImag
   const [showQrModal, setShowQrModal] = useState(false);
   const [showNotificationCenter, setShowNotificationCenter] = useState(false);
   const [showOrderDetailModal, setShowOrderDetailModal] = useState(false);
+  const [showProofModal, setShowProofModal] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [notificationPermission, setNotificationPermission] = useState<
     NotificationPermission | "unsupported" | "insecure"
@@ -38,6 +40,10 @@ export default function OrderSuccess({ order: initialOrder, onNewOrder, qrisImag
   const selectedOrder = records.find((record) => record.order.id === selectedOrderId)?.order ?? null;
   const isQrisPending = order.payment_method === "qris" && !order.is_paid;
 
+  function handleProofUploaded(updated: OrderOut) {
+    notifications.trackOrder(updated);
+  }
+
   const enablePaymentNotifications = async () => {
     if (!window.isSecureContext) {
       setNotificationPermission("insecure");
@@ -56,7 +62,6 @@ export default function OrderSuccess({ order: initialOrder, onNewOrder, qrisImag
     }
   };
 
-  // The notification center can receive OS-notification clicks and show that order.
   useEffect(() => {
     if (requestedOrderId === null) return;
     setSelectedOrderId(requestedOrderId);
@@ -131,7 +136,6 @@ export default function OrderSuccess({ order: initialOrder, onNewOrder, qrisImag
           </div>
         )}
 
-        {/* Status Indicator Icon */}
         {isQrisPending ? (
           <div className="relative w-20 h-20 mx-auto mb-4 flex items-center justify-center">
             <span className="absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-25 animate-ping" />
@@ -159,7 +163,6 @@ export default function OrderSuccess({ order: initialOrder, onNewOrder, qrisImag
           </div>
         )}
 
-        {/* Heading */}
         <h2 className="text-xl font-bold text-on-surface mb-1">
           {isQrisPending
             ? "Menunggu Konfirmasi Kasir"
@@ -190,7 +193,6 @@ export default function OrderSuccess({ order: initialOrder, onNewOrder, qrisImag
             : `Pesanan #${order.id} telah diterima di dapur dan sedang diproses.`}
         </p>
 
-        {/* Pending QRIS Action Banner */}
         {isQrisPending && (
           <div className="mb-5 p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-left">
             <div className="flex items-center justify-between">
@@ -206,6 +208,13 @@ export default function OrderSuccess({ order: initialOrder, onNewOrder, qrisImag
                 Buka QRIS
               </button>
             </div>
+
+            <PaymentProofUpload
+              orderId={order.id}
+              existingProofUrl={order.payment_proof_url ?? null}
+              onUploaded={handleProofUploaded}
+            />
+
             {notificationPermission === "granted" ? (
               <p className="mt-3 flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700" role="status">
                 <span aria-hidden="true">✓</span> Notifikasi pembayaran aktif
@@ -234,7 +243,6 @@ export default function OrderSuccess({ order: initialOrder, onNewOrder, qrisImag
           </div>
         )}
 
-        {/* Order Details Card */}
         <div className="bg-surface-container-low rounded-2xl p-4 mb-5 text-left border border-surface-container-highest">
           <div className="flex justify-between text-xs mb-2">
             <span className="text-on-surface-variant">Nomor Pesanan</span>
@@ -321,9 +329,28 @@ export default function OrderSuccess({ order: initialOrder, onNewOrder, qrisImag
             <span className="text-on-surface">Total</span>
             <span className="text-primary">{formattedTotal}</span>
           </div>
+
+          {order.payment_proof_url && (
+            <div className="mt-3 pt-3 border-t border-surface-container-highest">
+              <p className="text-[10px] font-semibold text-on-surface-variant mb-1.5 uppercase tracking-wide">
+                Bukti Pembayaran
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowProofModal(true)}
+                className="block w-full overflow-hidden rounded-xl border border-surface-container-highest focus:outline-none focus:ring-2 focus:ring-primary/40"
+                aria-label="Lihat bukti pembayaran yang sudah diunggah"
+              >
+                <img
+                  src={order.payment_proof_url}
+                  alt="Bukti pembayaran"
+                  className="w-full max-h-32 object-cover"
+                />
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Buttons */}
         <button
           onClick={onNewOrder}
           className="w-full py-3.5 rounded-2xl bg-linear-to-r from-primary via-[#0284c7] to-secondary text-white font-bold transition-all shadow-md shadow-primary/20 active:scale-[0.98]"
@@ -332,7 +359,6 @@ export default function OrderSuccess({ order: initialOrder, onNewOrder, qrisImag
         </button>
       </div>
 
-      {/* QRIS Re-open Modal */}
       {showQrModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
           <div className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl text-center">
@@ -352,7 +378,13 @@ export default function OrderSuccess({ order: initialOrder, onNewOrder, qrisImag
       )}
 
       {showOrderDetailModal && (
-        selectedOrder && <OrderDetailModal order={selectedOrder} onClose={() => setShowOrderDetailModal(false)} />
+        selectedOrder && (
+          <OrderDetailModal
+            order={selectedOrder}
+            onClose={() => setShowOrderDetailModal(false)}
+            onOrderUpdated={handleProofUploaded}
+          />
+        )
       )}
 
       {showNotificationCenter && (
@@ -361,6 +393,35 @@ export default function OrderSuccess({ order: initialOrder, onNewOrder, qrisImag
           onClose={() => setShowNotificationCenter(false)}
           onSelectOrder={openOrderDetail}
         />
+      )}
+
+      {showProofModal && order.payment_proof_url && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Pratinjau bukti pembayaran"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+          onClick={() => setShowProofModal(false)}
+        >
+          <div
+            className="relative max-w-sm w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setShowProofModal(false)}
+              aria-label="Tutup pratinjau"
+              className="absolute -top-3 -right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-700 shadow-md text-sm font-bold hover:bg-slate-100"
+            >
+              ✕
+            </button>
+            <img
+              src={order.payment_proof_url}
+              alt="Bukti pembayaran QRIS (diperbesar)"
+              className="w-full rounded-2xl shadow-xl"
+            />
+          </div>
+        </div>
       )}
     </div>
   );

@@ -224,3 +224,27 @@ def test_delete_file_calls_supabase_client(monkeypatch):
     assert captured["paths"] == ["menu/old.png"]
 
     sm._client = None
+
+
+def test_generate_avatar_image_path():
+    from app.core.storage import generate_avatar_image_path
+
+    p1 = generate_avatar_image_path(42, "avatar.png")
+    assert p1.startswith("avatars/42/")
+    assert p1.endswith(".png")
+
+    p2 = generate_avatar_image_path(42, "no_ext")
+    assert p2.startswith("avatars/42/")
+    assert p2.endswith(".jpg")
+
+
+def test_generate_qris_image_path():
+    from app.core.storage import generate_qris_image_path
+
+    p1 = generate_qris_image_path("qris.png")
+    assert p1.startswith("qris/")
+    assert p1.endswith(".png")
+
+    p2 = generate_qris_image_path("qris_no_ext")
+    assert p2.startswith("qris/")
+    assert p2.endswith(".jpg")

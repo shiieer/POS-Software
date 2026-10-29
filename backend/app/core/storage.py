@@ -57,3 +57,13 @@ def generate_menu_image_path(filename: str) -> str:
 def generate_qris_image_path(filename: str) -> str:
     ext = Path(filename).suffix.lower() or ".jpg"
     return f"qris/{uuid4().hex}{ext}"
+
+
+def generate_payment_proof_path(order_id: int, filename: str) -> str:
+    ext = Path(filename).suffix.lower() or ".jpg"
+    return f"proofs/{order_id}/{uuid4().hex}{ext}"
+
+
+def generate_avatar_image_path(user_id: int, filename: str) -> str:
+    ext = Path(filename).suffix.lower() or ".jpg"
+    return f"avatars/{user_id}/{uuid4().hex}{ext}"

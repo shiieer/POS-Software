@@ -1,10 +1,12 @@
 import { formatCurrency } from "../utils/formatCurrency";
 import type { OrderOut } from "../types";
 import { useEffect, useRef, useState } from "react";
+import PaymentProofUpload from "./PaymentProofUpload";
 
 interface Props {
 	order: OrderOut;
 	onClose: () => void;
+	onOrderUpdated?: (order: OrderOut) => void;
 }
 
 const KITCHEN_STATUS: Record<string, { label: string; bg: string; text: string; dot: string }> = {
@@ -15,12 +17,24 @@ const KITCHEN_STATUS: Record<string, { label: string; bg: string; text: string; 
 	cancelled: { label: "Dibatalkan",         bg: "bg-red-50",     text: "text-red-900",     dot: "bg-red-500" },
 };
 
-export default function OrderDetailModal({ order, onClose }: Props) {
+export default function OrderDetailModal({ order: initialOrder, onClose, onOrderUpdated }: Props) {
 	const [isClosing, setIsClosing] = useState(false);
+	const [order, setOrder] = useState<OrderOut>(initialOrder);
+	const [showProofPreview, setShowProofPreview] = useState(false);
 	const closeTimerRef = useRef<number | null>(null);
+
+	useEffect(() => {
+		setOrder(initialOrder);
+	}, [initialOrder]);
+
 	const kitchen = KITCHEN_STATUS[order.status] ?? KITCHEN_STATUS["pending"];
 	const isQris = order.payment_method === "qris";
 	const isCash = order.payment_method === "cash" || !order.payment_method;
+
+	function handleProofUploaded(updated: OrderOut) {
+		setOrder(updated);
+		onOrderUpdated?.(updated);
+	}
 
 	function requestClose() {
 		if (isClosing) return;
@@ -117,6 +131,41 @@ export default function OrderDetailModal({ order, onClose }: Props) {
 					</div>
 				)}
 
+				{/* Bukti Pembayaran QRIS */}
+				{isQris && order.status !== "cancelled" && !order.is_paid && (
+					<div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50/70 p-3.5">
+						<p className="text-xs font-bold text-amber-900">Bukti Pembayaran QRIS</p>
+						<p className="text-[11px] text-amber-700 mb-1">
+							Unggah struk / tangkapan layar pembayaran untuk mempercepat konfirmasi kasir.
+						</p>
+						<PaymentProofUpload
+							orderId={order.id}
+							existingProofUrl={order.payment_proof_url ?? null}
+							onUploaded={handleProofUploaded}
+						/>
+					</div>
+				)}
+
+				{/* Bukti Pembayaran QRIS jika sudah lunas */}
+				{isQris && order.is_paid && order.payment_proof_url && (
+					<div className="mb-4 flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 p-3">
+						<div className="flex items-center gap-2.5">
+							<span className="text-lg">🧾</span>
+							<div>
+								<p className="text-xs font-bold text-slate-800">Bukti Pembayaran QRIS</p>
+								<p className="text-[11px] text-slate-500">Bukti transfer terlampir</p>
+							</div>
+						</div>
+						<button
+							type="button"
+							onClick={() => setShowProofPreview(true)}
+							className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-100"
+						>
+							Lihat Bukti
+						</button>
+					</div>
+				)}
+
 				{/* Order info */}
 				<div className="mb-4 space-y-2 rounded-2xl bg-slate-50 p-3.5 text-sm">
 					<div className="flex justify-between gap-4">
@@ -168,6 +217,32 @@ export default function OrderDetailModal({ order, onClose }: Props) {
 					<span className="font-bold text-slate-900">Total</span>
 					<span className="text-lg font-extrabold text-primary">{formatCurrency(order.total_amount)}</span>
 				</div>
+
+				{showProofPreview && order.payment_proof_url && (
+					<div
+						role="dialog"
+						aria-modal="true"
+						aria-label="Pratinjau bukti pembayaran"
+						className="fixed inset-0 z-[80] flex items-center justify-center bg-black/80 p-4"
+						onClick={() => setShowProofPreview(false)}
+					>
+						<div className="relative max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+							<button
+								type="button"
+								onClick={() => setShowProofPreview(false)}
+								aria-label="Tutup pratinjau"
+								className="absolute -top-3 -right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-700 shadow-md text-sm font-bold hover:bg-slate-100"
+							>
+								✕
+							</button>
+							<img
+								src={order.payment_proof_url}
+								alt="Bukti pembayaran QRIS"
+								className="w-full rounded-2xl shadow-xl"
+							/>
+						</div>
+					</div>
+				)}
 			</section>
 		</div>
 	);

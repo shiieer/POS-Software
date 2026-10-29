@@ -26,6 +26,11 @@ export async function updateMenuItemApi(
 	return data;
 }
 
+export async function deleteMenuItemApi(itemId: number) {
+	const { data } = await api.delete<{ message: string }>(`/menu/${itemId}`);
+	return data;
+}
+
 function guessMime(uri: string) {
 	const lower = uri.toLowerCase();
 	if (lower.includes(".png") || lower.includes("image/png"))

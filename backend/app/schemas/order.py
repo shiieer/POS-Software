@@ -43,6 +43,7 @@ class OrderOut(BaseModel):
     payment_method: PaymentMethod | None
     notes: str | None
     total_amount: float
+    payment_proof_url: str | None = None
     created_at: datetime
     updated_at: datetime
     items: list[OrderItemOut]

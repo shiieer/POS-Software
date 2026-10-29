@@ -31,9 +31,13 @@ export default function MenuNavigator({ resetRef }: { resetRef?: MenuNavigatorRe
 				onSaved={() => {
 					const message = editingItem
 						? "Item updated successfully"
-						: "Item saved successfully	";
+						: "Item saved successfully";
 					closeForm();
 					setSuccessMessage(message);
+				}}
+				onDeleted={() => {
+					closeForm();
+					setSuccessMessage("Item deleted successfully");
 				}}
 			/>
 		);

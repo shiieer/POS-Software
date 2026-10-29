@@ -22,14 +22,46 @@ export default function OrderDetailActions({
 	onPrint,
 }: Props) {
 	const isPaid = order.paymentStatus === "paid";
+	const needsPaymentConfirm =
+		order.paymentMethod === "qris" &&
+		!isPaid &&
+		order.status !== "cancelled";
 	const canCancel =
+		!isPaid &&
 		order.status !== "ready" &&
 		order.status !== "served" &&
 		order.status !== "cancelled";
 
 	return (
 		<View className="gap-3">
-			{order.status === "new" ? (
+			{needsPaymentConfirm ? (
+				<Pressable
+					onPress={() => onMarkPaid()}
+					disabled={updating}
+					className="flex-row items-center justify-center gap-1.5 rounded-2xl bg-emerald-600 py-3.5"
+					style={{
+						shadowColor: "#10B981",
+						shadowOpacity: 0.25,
+						shadowRadius: 8,
+						shadowOffset: { width: 0, height: 4 },
+					}}
+				>
+					{updating ? (
+						<ActivityIndicator color="#FFFFFF" />
+					) : (
+						<>
+							<Ionicons
+								name="checkmark-circle"
+								size={17}
+								color="#FFFFFF"
+							/>
+							<Text className="text-xs font-bold tracking-wide text-white">
+								Konfirmasi QRIS
+							</Text>
+						</>
+					)}
+				</Pressable>
+			) : order.status === "new" ? (
 				<Pressable
 					onPress={onStartPreparing}
 					disabled={updating}
@@ -84,33 +116,29 @@ export default function OrderDetailActions({
 			) : null}
 
 			<View className="flex-row gap-3">
-				<Pressable
-					onPress={() => onMarkPaid()}
-					disabled={updating || isPaid}
-					className={`flex-1 items-center justify-center rounded-2xl border py-3 ${
-						isPaid
-							? "border-emerald-200 bg-emerald-50 opacity-70 dark:border-emerald-800 dark:bg-emerald-950"
-							: order.paymentMethod === "qris"
-							? "border-emerald-500 bg-emerald-600 dark:border-emerald-600 dark:bg-emerald-700"
-							: "border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900"
-					}`}
-				>
-					<Text
-						className={`text-xs font-bold ${
+				{!needsPaymentConfirm ? (
+					<Pressable
+						onPress={() => onMarkPaid()}
+						disabled={updating || isPaid}
+						className={`flex-1 items-center justify-center rounded-2xl border py-3 ${
 							isPaid
-								? "text-emerald-700 dark:text-emerald-300"
-								: order.paymentMethod === "qris"
-								? "text-white"
-								: "text-slate-800 dark:text-slate-100"
+								? "border-emerald-200 bg-emerald-50 opacity-70 dark:border-emerald-800 dark:bg-emerald-950"
+								: "border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900"
 						}`}
 					>
-						{isPaid
-							? `✓ Lunas (${order.paymentMethod.toUpperCase()})`
-							: order.paymentMethod === "qris"
-							? "Konfirmasi QRIS"
-							: "Terima Kasir (Cash)"}
-					</Text>
-				</Pressable>
+						<Text
+							className={`text-xs font-bold ${
+								isPaid
+									? "text-emerald-700 dark:text-emerald-300"
+									: "text-slate-800 dark:text-slate-100"
+							}`}
+						>
+							{isPaid
+								? `✓ Lunas (${order.paymentMethod.toUpperCase()})`
+								: "Terima Kasir (Cash)"}
+						</Text>
+					</Pressable>
+				) : null}
 
 				<Pressable
 					onPress={onCancel}

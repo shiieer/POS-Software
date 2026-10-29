@@ -5,11 +5,18 @@ import { TableApi } from "@/types/api/table";
 type Props = {
 	table: TableApi;
 	onViewQr: () => void;
-	onManage: () => void;
+	onManage?: () => void;
+	isAdmin?: boolean;
 };
 
-export default function TableCard({ table, onViewQr, onManage }: Props) {
+export default function TableCard({
+	table,
+	onViewQr,
+	onManage,
+	isAdmin = true,
+}: Props) {
 	const active = table.is_active;
+	const handlePress = isAdmin && onManage ? onManage : onViewQr;
 
 	return (
 		<View className="mb-4 overflow-hidden rounded-2xl border border-[#DEE8FF]/80 bg-white p-4">
@@ -19,11 +26,15 @@ export default function TableCard({ table, onViewQr, onManage }: Props) {
 				}`}
 			/>
 			<Pressable
-				onPress={onManage}
-				onLongPress={onManage}
+				onPress={handlePress}
+				onLongPress={isAdmin && onManage ? onManage : undefined}
 				delayLongPress={350}
 				accessibilityRole="button"
-				accessibilityLabel={`${table.name}. Tap or press and hold for table actions`}
+				accessibilityLabel={
+					isAdmin
+						? `${table.name}. Tap or press and hold for table actions`
+						: `${table.name}. Tap to view QR code`
+				}
 				className="mt-1 items-center"
 			>
 				<View

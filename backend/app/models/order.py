@@ -46,6 +46,7 @@ class Order(Base):
     )
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     total_amount: Mapped[float] = mapped_column(Float, default=0.0)
+    payment_proof_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), onupdate=func.now()
@@ -68,11 +69,14 @@ class OrderItem(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     order_id: Mapped[int] = mapped_column(ForeignKey("orders.id"))
-    menu_item_id: Mapped[int] = mapped_column(ForeignKey("menu_items.id"))
+    menu_item_id: Mapped[int | None] = mapped_column(
+        ForeignKey("menu_items.id"), nullable=True
+    )
+    item_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     quantity: Mapped[int] = mapped_column(Integer, default=1)
     unit_price: Mapped[float] = mapped_column(Float)
     subtotal: Mapped[float] = mapped_column(Float)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     order: Mapped[Order] = relationship(back_populates="items")
-    menu_item: Mapped["MenuItem"] = relationship(back_populates="order_items")
+    menu_item: Mapped["MenuItem | None"] = relationship(back_populates="order_items")

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { AddMenuItemForm, ManagedMenuItem } from "../types/menu";
 import {
 	createMenuItemApi,
+	deleteMenuItemApi,
 	updateMenuItemApi,
 	uploadMenuImageApi,
 } from "@/services/api/menu.api";
@@ -37,6 +38,7 @@ export function useAddMenuItem(
 	const [form, setForm] = useState<AddMenuItemForm>(() => toForm(item));
 	const [categories, setCategories] = useState(existingCategories);
 	const [saving, setSaving] = useState(false);
+	const [deleting, setDeleting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [fieldErrors, setFieldErrors] = useState<
 		Partial<Record<"name" | "price" | "category", string>>
@@ -125,15 +127,32 @@ export function useAddMenuItem(
 		}
 	}
 
+	async function deleteItem(): Promise<boolean> {
+		if (!item) return false;
+		setDeleting(true);
+		setError(null);
+		try {
+			await deleteMenuItemApi(item.id);
+			return true;
+		} catch (err) {
+			setError(getErrorMessage(err, "Failed to delete item"));
+			return false;
+		} finally {
+			setDeleting(false);
+		}
+	}
+
 	return {
 		form,
 		categories,
 		saving,
+		deleting,
 		error,
 		fieldErrors,
 		isEditing,
 		setField,
 		selectCategory,
 		submit,
+		deleteItem,
 	};
 }

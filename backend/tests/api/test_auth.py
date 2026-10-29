@@ -108,3 +108,76 @@ def test_get_active_staff_returns_list(client, admin_headers, staff_user):
     assert isinstance(response.json(), list)
     usernames = [u["username"] for u in response.json()]
     assert staff_user.username in usernames
+
+
+def test_login_with_account_code_success(client, admin_headers):
+    # Create staff user with account code
+    res = client.post(
+        "/users",
+        headers=admin_headers,
+        json={"username": "codeuser", "password": "codepass123", "role": "staff"},
+    )
+    assert res.status_code == 201
+    code = res.json()["account_code"]
+    assert code.startswith("STF-")
+
+    # Login using account code instead of username
+    login_res = client.post(
+        "/auth/login",
+        json={"username": code, "password": "codepass123"},
+    )
+    assert login_res.status_code == 200
+    assert login_res.json()["username"] == "codeuser"
+
+
+def test_upload_my_avatar_validation_and_success(client, staff_headers, monkeypatch):
+    fake_png = b"\x89PNG\r\n\x1a\n" + b"\x00" * 30
+
+    # 1. Invalid content type
+    res_invalid = client.post(
+        "/auth/me/avatar",
+        headers=staff_headers,
+        files={"file": ("avatar.txt", b"plain text", "text/plain")},
+    )
+    assert res_invalid.status_code == 400
+    assert "Only JPG, PNG, and WEBP are allowed" in res_invalid.json()["detail"]
+
+    # 2. Empty file
+    res_empty = client.post(
+        "/auth/me/avatar",
+        headers=staff_headers,
+        files={"file": ("avatar.png", b"", "image/png")},
+    )
+    assert res_empty.status_code == 400
+    assert "Empty file" in res_empty.json()["detail"]
+
+    # 3. File too large (> 5 MB)
+    large_data = b"x" * (5 * 1024 * 1024 + 1)
+    res_large = client.post(
+        "/auth/me/avatar",
+        headers=staff_headers,
+        files={"file": ("avatar.png", large_data, "image/png")},
+    )
+    assert res_large.status_code == 400
+    assert "File too large" in res_large.json()["detail"]
+
+    # 4. Successful avatar upload
+    uploaded_url = "https://example.supabase.co/storage/v1/object/public/avatars/user_1/test.png"
+    monkeypatch.setattr(
+        "app.routers.auth.upload_bytes",
+        lambda bucket, path, data, content_type, upsert=True: uploaded_url,
+    )
+
+    res_success = client.post(
+        "/auth/me/avatar",
+        headers=staff_headers,
+        files={"file": ("avatar.png", fake_png, "image/png")},
+    )
+    assert res_success.status_code == 200
+    data = res_success.json()
+    assert data["avatar_url"] == uploaded_url
+
+    # Check /auth/me returns the updated avatar_url
+    me_res = client.get("/auth/me", headers=staff_headers)
+    assert me_res.status_code == 200
+    assert me_res.json()["avatar_url"] == uploaded_url

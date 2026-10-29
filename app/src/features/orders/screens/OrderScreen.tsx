@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
 	ActivityIndicator,
 	FlatList,
@@ -12,7 +13,11 @@ import OrderStatusFilter from "../components/OrderStatusFilter";
 import { useOrders } from "../hooks/useOrders";
 import OrderCard from "../components/OrderCard";
 import ShiftOverview from "../components/ShiftOverview";
+import ConfirmOrderModal, {
+	ConfirmOrderActionType,
+} from "../components/ConfirmOrderModal";
 import { useOrientationLayout } from "@/shared/hooks/useOrientationLayout";
+import { Order } from "../types/order";
 
 type Props = {
 	onOpenOrder: (orderId: number) => void;
@@ -37,9 +42,31 @@ export default function OrderScreen({ onOpenOrder }: Props) {
 		startPreparing,
 		markReady,
 		markServed,
+		confirmPayment,
 		printOrder,
 	} = useOrders();
 	const { isLandscape, width } = useOrientationLayout();
+
+	const [confirmAction, setConfirmAction] = useState<{
+		type: ConfirmOrderActionType;
+		order: Order;
+	} | null>(null);
+	const [actionLoading, setActionLoading] = useState(false);
+
+	const handleConfirmAction = async () => {
+		if (!confirmAction) return;
+		try {
+			setActionLoading(true);
+			if (confirmAction.type === "start_preparing") {
+				await startPreparing(confirmAction.order.id);
+			} else if (confirmAction.type === "mark_paid") {
+				await confirmPayment(confirmAction.order.id, "qris");
+			}
+		} finally {
+			setActionLoading(false);
+			setConfirmAction(null);
+		}
+	};
 
 	const contentWidth = isLandscape ? Math.max(300, width - 200) : width;
 	const gap = 14;
@@ -83,18 +110,26 @@ export default function OrderScreen({ onOpenOrder }: Props) {
 									: "border-slate-200 bg-white"
 							}`}
 						>
-							<View className={`h-2 w-2 rounded-full ${
-								pf === "Unpaid" ? "bg-rose-400" :
-								pf === "Paid"   ? "bg-emerald-400" :
-								                  "bg-slate-300"
-							}`} />
-							<Text className={`text-[11px] font-bold ${
-								isActive
-									? pf === "Unpaid" ? "text-rose-700"
-									: pf === "Paid"   ? "text-emerald-700"
-									:                   "text-sky-700"
-									: "text-slate-500"
-							}`}>
+							<View
+								className={`h-2 w-2 rounded-full ${
+									pf === "Unpaid"
+										? "bg-rose-400"
+										: pf === "Paid"
+										? "bg-emerald-400"
+										: "bg-slate-300"
+								}`}
+							/>
+							<Text
+								className={`text-[11px] font-bold ${
+									isActive
+										? pf === "Unpaid"
+											? "text-rose-700"
+											: pf === "Paid"
+											? "text-emerald-700"
+											: "text-sky-700"
+										: "text-slate-500"
+								}`}
+							>
 								{pf}
 							</Text>
 						</Pressable>
@@ -168,7 +203,12 @@ export default function OrderScreen({ onOpenOrder }: Props) {
 						<OrderCard
 							order={item}
 							onPress={() => onOpenOrder(item.id)}
-							onStartPreparing={startPreparing}
+							onConfirmPayment={() =>
+								setConfirmAction({ type: "mark_paid", order: item })
+							}
+							onStartPreparing={() =>
+								setConfirmAction({ type: "start_preparing", order: item })
+							}
 							onPrint={printOrder}
 							onMarkReady={markReady}
 							onMarkServed={markServed}
@@ -178,6 +218,19 @@ export default function OrderScreen({ onOpenOrder }: Props) {
 					)}
 				/>
 			)}
+
+			<ConfirmOrderModal
+				visible={!!confirmAction}
+				actionType={confirmAction?.type ?? null}
+				orderCode={confirmAction?.order.orderCode}
+				orderTitle={confirmAction?.order.title}
+				totalAmount={confirmAction?.order.totalAmount}
+				paymentMethod={confirmAction?.order.paymentMethod}
+				paymentProofUrl={confirmAction?.order.paymentProofUrl}
+				loading={actionLoading}
+				onClose={() => setConfirmAction(null)}
+				onConfirm={handleConfirmAction}
+			/>
 		</ScreenContainer>
 	);
 }

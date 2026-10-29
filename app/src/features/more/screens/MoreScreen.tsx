@@ -8,39 +8,49 @@ import ProfileCard from "../components/ProfileCard";
 import SnapshotGrid from "../components/SnapshotGrid";
 import LogoutModal from "@/shared/components/LogoutModal";
 import { useMoreOverview } from "../hooks/useMoreOverview";
+import { useUserRole } from "@/shared/hooks/useUserRole";
 
 type Props = {
 	onNavigate: (destination: MoreDestination) => void;
 };
 
 export default function MoreScreen({ onNavigate }: Props) {
+	const { isAdmin } = useUserRole();
 	const snapshot = useMoreOverview();
 	const [alertsOn, setAlertsOn] = useState(true);
 	const [showLogout, setShowLogout] = useState(false);
 
 	const operations: MoreItem[] = [
-		{
-			key: "staff",
-			label: "Staff Management",
-			icon: "people-outline",
-			destination: "staff",
-			badge: String(snapshot.staff),
-		},
+		...(isAdmin
+			? [
+					{
+						key: "staff",
+						label: "Staff Management",
+						icon: "people-outline" as const,
+						destination: "staff" as const,
+						badge: String(snapshot.staff),
+					},
+			  ]
+			: []),
 		{
 			key: "tables",
 			label: "Table Layout",
 			icon: "grid-outline",
 			destination: "tables",
 		},
-		{
-			key: "reports",
-			label: "Shift Reports",
-			icon: "stats-chart-outline",
-			destination: "reports",
-		},
+		...(isAdmin
+			? [
+					{
+						key: "reports",
+						label: "Shift Reports",
+						icon: "stats-chart-outline" as const,
+						destination: "reports" as const,
+					},
+			  ]
+			: []),
 		{
 			key: "qris",
-			label: "QRIS Payment Settings",
+			label: isAdmin ? "QRIS Payment Settings" : "QRIS Payment",
 			icon: "qr-code-outline",
 			destination: "qris",
 		},
@@ -62,7 +72,16 @@ export default function MoreScreen({ onNavigate }: Props) {
 	];
 
 	const system: MoreItem[] = [
-		{ key: "settings", label: "App Settings", icon: "settings-outline", destination: "settings" },
+		...(isAdmin
+			? [
+					{
+						key: "settings",
+						label: "App Settings",
+						icon: "settings-outline" as const,
+						destination: "settings" as const,
+					},
+			  ]
+			: []),
 		{ key: "help", label: "Help & Support", icon: "help-circle-outline" },
 		{ key: "logout", label: "Log Out", icon: "log-out-outline", danger: true },
 	];
@@ -77,6 +96,7 @@ export default function MoreScreen({ onNavigate }: Props) {
 	}
 
 	function renderSection(title: string, items: MoreItem[]) {
+		if (items.length === 0) return null;
 		return (
 			<View className="mb-5">
 				<Text className="mb-2 px-1 text-[11px] font-bold uppercase tracking-widest text-slate-400">
@@ -109,7 +129,7 @@ export default function MoreScreen({ onNavigate }: Props) {
 				showsVerticalScrollIndicator={false}
 			>
 				<ProfileCard onEditProfile={() => onNavigate("profile")} />
-				<SnapshotGrid snapshot={snapshot} />
+				<SnapshotGrid snapshot={snapshot} isAdmin={isAdmin} />
 				{renderSection("Operations", operations)}
 				{renderSection("Personal", personal)}
 				{renderSection("System", system)}

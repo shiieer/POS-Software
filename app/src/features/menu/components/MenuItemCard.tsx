@@ -10,6 +10,7 @@ type Props = {
 	featured?: boolean;
 	onPress: () => void;
 	onToggle: (item: ManagedMenuItem) => void;
+	onDelete?: (item: ManagedMenuItem) => void;
 };
 
 export default function MenuItemCard({
@@ -17,6 +18,7 @@ export default function MenuItemCard({
 	featured = false,
 	onPress,
 	onToggle,
+	onDelete,
 }: Props) {
 	const available = item.isAvailable;
 
@@ -130,14 +132,23 @@ export default function MenuItemCard({
 					</View>
 				</Pressable>
 
-				<View className="flex-row items-center gap-3">
+				<View className="flex-row items-center gap-2">
 					<Pressable
 						onPress={onPress}
 						className="h-8 w-8 items-center justify-center rounded-xl border border-[#BFC7D2]"
 						accessibilityLabel="Edit item"
 					>
-						<Ionicons name="pencil" size={18} color="#3F4850" />
+						<Ionicons name="pencil" size={16} color="#3F4850" />
 					</Pressable>
+					{onDelete ? (
+						<Pressable
+							onPress={() => onDelete(item)}
+							className="h-8 w-8 items-center justify-center rounded-xl border border-rose-200 bg-rose-50 active:bg-rose-100"
+							accessibilityLabel="Delete item"
+						>
+							<Ionicons name="trash-outline" size={16} color="#E11D48" />
+						</Pressable>
+					) : null}
 					<AvailabilitySwitch
 						value={available}
 						onValueChange={() => onToggle(item)}

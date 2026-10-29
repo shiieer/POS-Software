@@ -1,9 +1,16 @@
 from tests.helpers.factories import create_table_api
 
 
-def test_list_tables_requires_admin(client, staff_headers):
+def test_list_tables_allowed_for_staff(client, staff_headers):
     response = client.get("/tables", headers=staff_headers)
-    assert response.status_code == 403
+    assert response.status_code == 200
+
+
+def test_get_table_qr_allowed_for_staff(client, admin_headers, staff_headers):
+    created = create_table_api(client, admin_headers, name="Staff QR Table")
+    response = client.get(f"/tables/{created['id']}/qr", headers=staff_headers)
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "image/png"
 
 
 def test_create_and_list_tables(client, admin_headers):

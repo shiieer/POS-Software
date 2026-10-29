@@ -82,7 +82,7 @@ export default function StaffCard({ user, onToggleActive, onResetPassword }: Pro
 						</View>
 					</View>
 					<Text className="mt-0.5 text-xs font-medium text-slate-400">
-						@{user.username} • {isAdmin ? "Manager" : "Staff"}
+						@{user.username} {user.account_code ? `• ID: ${user.account_code}` : ""} • {isAdmin ? "Manager" : "Staff"}
 					</Text>
 				</View>
 				<View className="items-end self-stretch">

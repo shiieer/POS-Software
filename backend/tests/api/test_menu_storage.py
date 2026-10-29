@@ -128,3 +128,56 @@ def test_delete_menu_image_without_image_url(
 
     assert response.status_code == 200
     assert len(mock_supabase_storage["deleted"]) == 0
+
+
+def test_delete_menu_item_deletes_image_from_storage(
+    client, admin_headers, mock_supabase_storage
+):
+    created = create_menu_item_api(
+        client, admin_headers, name="Delete Item With Image", price=10000
+    )
+
+    client.post(
+        f"/menu/{created['id']}/image",
+        headers=admin_headers,
+        files={"file": ("item.png", make_png_bytes(), "image/png")},
+    )
+
+    response = client.delete(
+        f"/menu/{created['id']}",
+        headers=admin_headers,
+    )
+
+    assert response.status_code == 200
+    assert response.json()["message"] == "Menu item deleted"
+    assert len(mock_supabase_storage["deleted"]) == 1
+
+
+def test_delete_menu_item_handles_storage_delete_exception(
+    client, admin_headers, monkeypatch
+):
+    created = create_menu_item_api(
+        client, admin_headers, name="Item Image Delete Error", price=10000
+    )
+
+    client.post(
+        f"/menu/{created['id']}/image",
+        headers=admin_headers,
+        files={"file": ("item.png", make_png_bytes(), "image/png")},
+    )
+
+    def failing_delete_file(*args, **kwargs):
+        raise RuntimeError("Supabase deletion failed")
+
+    monkeypatch.setattr("app.routers.menu.delete_file", failing_delete_file)
+
+    response = client.delete(
+        f"/menu/{created['id']}",
+        headers=admin_headers,
+    )
+
+    assert response.status_code == 200
+    assert response.json()["message"] == "Menu item deleted"
+    # Verify it is deleted from DB
+    get_res = client.get("/menu")
+    assert not any(item["id"] == created["id"] for item in get_res.json())

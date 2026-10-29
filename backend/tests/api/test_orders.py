@@ -184,3 +184,125 @@ def test_create_order_with_qris_payment_method(client, db_session):
     data = response.json()
     assert data["payment_method"] == "qris"
     assert data["is_paid"] is False
+
+
+def test_cannot_cancel_paid_order(client, db_session, staff_headers):
+    menu = create_menu_item_db(db_session)
+    order_id = client.post(
+        "/order", json=create_order_payload(menu.id, quantity=1)
+    ).json()["id"]
+
+    # Mark as paid
+    pay_res = client.patch(
+        f"/order/{order_id}/payment",
+        headers=staff_headers,
+        json={"payment_method": "cash", "is_paid": True},
+    )
+    assert pay_res.status_code == 200
+    assert pay_res.json()["is_paid"] is True
+
+    # Attempt to cancel
+    cancel_res = client.patch(
+        f"/order/{order_id}/status",
+        headers=staff_headers,
+        json={"status": "cancelled"},
+    )
+    assert cancel_res.status_code == 400
+    assert "Cannot cancel an order that has already been paid" in cancel_res.json()["detail"]
+
+
+def test_upload_payment_proof(client, db_session, monkeypatch):
+    menu = create_menu_item_db(db_session)
+    order_id = client.post(
+        "/order", json=create_order_payload(menu.id, quantity=1)
+    ).json()["id"]
+
+    # Mock upload_bytes
+    monkeypatch.setattr(
+        "app.routers.orders.upload_bytes",
+        lambda bucket, path, data, content_type, upsert=True: f"https://example.supabase.co/storage/v1/object/public/{bucket}/{path}"
+    )
+
+    # Invalid file type
+    res_invalid = client.post(
+        f"/order/{order_id}/payment-proof",
+        files={"file": ("test.txt", b"plain text", "text/plain")},
+    )
+    assert res_invalid.status_code == 400
+
+    # Successful image upload
+    fake_img = b"\xff\xd8\xff\xe0\x00\x10JFIF" + b"\x00" * 20
+    res_success = client.post(
+        f"/order/{order_id}/payment-proof",
+        files={"file": ("proof.jpg", fake_img, "image/jpeg")},
+    )
+    assert res_success.status_code == 200
+    data = res_success.json()
+    assert data["payment_proof_url"] is not None
+    assert "payment-proofs" in data["payment_proof_url"]
+
+
+def test_upload_payment_proof_validation_errors(client, db_session, staff_headers):
+    menu = create_menu_item_db(db_session)
+    fake_img = b"\xff\xd8\xff\xe0\x00\x10JFIF" + b"\x00" * 20
+
+    # 1. Order not found (line 77)
+    res_not_found = client.post(
+        "/order/999999/payment-proof",
+        files={"file": ("proof.jpg", fake_img, "image/jpeg")},
+    )
+    assert res_not_found.status_code == 404
+    assert "Order not found" in res_not_found.json()["detail"]
+
+    # 2. Empty file (line 90)
+    order_id = client.post(
+        "/order", json=create_order_payload(menu.id, quantity=1)
+    ).json()["id"]
+    res_empty = client.post(
+        f"/order/{order_id}/payment-proof",
+        files={"file": ("proof.jpg", b"", "image/jpeg")},
+    )
+    assert res_empty.status_code == 400
+    assert "Empty file" in res_empty.json()["detail"]
+
+    # 3. File too large (line 93)
+    large_file = b"x" * (10 * 1024 * 1024 + 1)
+    res_large = client.post(
+        f"/order/{order_id}/payment-proof",
+        files={"file": ("proof.jpg", large_file, "image/jpeg")},
+    )
+    assert res_large.status_code == 400
+    assert "File too large" in res_large.json()["detail"]
+
+    # 4. Order is cancelled (line 83)
+    order_id_cancel = client.post(
+        "/order", json=create_order_payload(menu.id, quantity=1)
+    ).json()["id"]
+    client.patch(
+        f"/order/{order_id_cancel}/status",
+        headers=staff_headers,
+        json={"status": "cancelled"},
+    )
+    res_cancelled = client.post(
+        f"/order/{order_id_cancel}/payment-proof",
+        files={"file": ("proof.jpg", fake_img, "image/jpeg")},
+    )
+    assert res_cancelled.status_code == 400
+    assert "Cannot upload proof for a cancelled order" in res_cancelled.json()["detail"]
+
+    # 5. Order is already marked as paid (line 80)
+    order_id_paid = client.post(
+        "/order", json=create_order_payload(menu.id, quantity=1)
+    ).json()["id"]
+    client.patch(
+        f"/order/{order_id_paid}/payment",
+        headers=staff_headers,
+        json={"payment_method": "cash", "is_paid": True},
+    )
+    res_paid = client.post(
+        f"/order/{order_id_paid}/payment-proof",
+        files={"file": ("proof.jpg", fake_img, "image/jpeg")},
+    )
+    assert res_paid.status_code == 400
+    assert "Order is already marked as paid" in res_paid.json()["detail"]
+

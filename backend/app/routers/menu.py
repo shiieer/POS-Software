@@ -1,9 +1,12 @@
+import logging
+
 from fastapi import APIRouter, File, HTTPException, UploadFile, status
 
 from app.config import settings
 from app.core.storage import delete_file, generate_menu_image_path, upload_bytes
 from app.dependencies import AdminUser, DbSession
 from app.models.menu import MenuItem
+from app.models.order import OrderItem
 from app.schemas.common import MessageResponse
 from app.schemas.menu import MenuItemCreate, MenuItemOut, MenuItemUpdate
 
@@ -12,6 +15,8 @@ ALLOWED_IMAGE_TYPES = {
     "image/png": ".png",
     "image/webp": ".webp",
 }
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/menu", tags=["Menu"])
 
@@ -54,6 +59,24 @@ def delete_menu_item(item_id: int, _: AdminUser, db: DbSession):
     item = db.query(MenuItem).filter(MenuItem.id == item_id).first()
     if not item:
         raise HTTPException(status_code=404, detail="Menu item not found")
+
+    if item.image_url:
+        marker = f"/storage/v1/object/public/{settings.SUPABASE_MENU_BUCKET}/"
+        if marker in item.image_url:
+            old_path = item.image_url.split(marker, 1)[1]
+            try:
+                delete_file(bucket=settings.SUPABASE_MENU_BUCKET, path=old_path)
+            except Exception as err:  # noqa: BLE001
+                logger.warning("Failed to delete menu image from storage: %s", err)
+
+    # Ensure item_name is preserved in order_items before detaching reference
+    db.query(OrderItem).filter(
+        OrderItem.menu_item_id == item_id, OrderItem.item_name.is_(None)
+    ).update({OrderItem.item_name: item.name}, synchronize_session=False)
+
+    db.query(OrderItem).filter(OrderItem.menu_item_id == item_id).update(
+        {OrderItem.menu_item_id: None}, synchronize_session=False
+    )
 
     db.delete(item)
     db.commit()

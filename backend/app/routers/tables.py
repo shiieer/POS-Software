@@ -10,7 +10,7 @@ from app.core.qr import (
     generator_qr_token,
 )
 from app.core.storage import delete_file
-from app.dependencies import AdminUser, DbSession
+from app.dependencies import AdminUser, DbSession, StaffUser
 from app.models.order import Order
 from app.models.table import Table
 from app.schemas.table import TableCreate, TableOut, TablePublic
@@ -55,7 +55,7 @@ def _get_table_or_404(table_id: int, db: Session) -> Table:
 
 
 @router.get("", response_model=list[TableOut])
-def list_tables(request: Request, _: AdminUser, db: DbSession):
+def list_tables(request: Request, _: StaffUser, db: DbSession):
     tables = db.query(Table).order_by(Table.id).all()
     origin = request.headers.get("origin")
     return [_serialize_table(table, request_origin=origin) for table in tables]
@@ -76,7 +76,7 @@ def create_table(payload: TableCreate, request: Request, _: AdminUser, db: DbSes
 
 
 @router.get("/{table_id}/qr")
-def get_table_qr(table_id: int, request: Request, _: AdminUser, db: DbSession):
+def get_table_qr(table_id: int, request: Request, _: StaffUser, db: DbSession):
     table = _get_table_or_404(table_id, db)
     menu_url = build_menu_url(table.id, table.qr_token, request.headers.get("origin"))
     return Response(content=generate_qr_png(menu_url), media_type="image/png")

@@ -11,6 +11,8 @@ type Props = {
 	status: OrderStatus;
 	primaryClass: string;
 	primaryTextClass: string;
+	needsPaymentConfirm?: boolean;
+	onConfirmPayment?: () => void;
 	onStartPreparing: () => void;
 	onPrint: () => void;
 	onMarkReady: () => void;
@@ -21,20 +23,42 @@ export default function OrderActionButtons({
 	status,
 	primaryClass,
 	primaryTextClass,
+	needsPaymentConfirm = false,
+	onConfirmPayment,
 	onStartPreparing,
 	onPrint,
 	onMarkReady,
 	onMarkServed,
 }: Props) {
 	const { isDark } = useAppTheme();
-	const label = getPrimaryActionLabel(status);
-	const icon = getPrimaryActionIcon(status);
+	const label = needsPaymentConfirm
+		? "Konfirmasi QRIS"
+		: getPrimaryActionLabel(status);
+	const icon = needsPaymentConfirm
+		? ("checkmark-circle" as const)
+		: getPrimaryActionIcon(status);
 
 	const onPrimary = () => {
+		if (needsPaymentConfirm) {
+			onConfirmPayment?.();
+			return;
+		}
 		if (status === "new") onStartPreparing();
 		if (status === "preparing") onMarkReady();
 		if (status === "ready") onMarkServed();
 	};
+
+	const buttonBgClass = needsPaymentConfirm
+		? "bg-emerald-600 active:bg-emerald-700"
+		: primaryClass;
+	const buttonTextClass = needsPaymentConfirm
+		? "text-white"
+		: primaryTextClass;
+	const shadowColor = needsPaymentConfirm
+		? "#10B981"
+		: status === "preparing"
+			? "#10B981"
+			: "#0284C7";
 
 	return (
 		<View className="flex-row items-center gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
@@ -52,10 +76,9 @@ export default function OrderActionButtons({
 			{label ? (
 				<Pressable
 					onPress={onPrimary}
-					className={`h-10 flex-1 flex-row items-center justify-center gap-1.5 rounded-2xl ${primaryClass}`}
+					className={`h-10 flex-1 flex-row items-center justify-center gap-1.5 rounded-2xl ${buttonBgClass}`}
 					style={{
-						shadowColor:
-							status === "preparing" ? "#10B981" : "#0284C7",
+						shadowColor,
 						shadowOpacity: 0.25,
 						shadowRadius: 8,
 						shadowOffset: { width: 0, height: 4 },
@@ -66,7 +89,7 @@ export default function OrderActionButtons({
 						<Ionicons name={icon} size={17} color="#FFFFFF" />
 					) : null}
 					<Text
-						className={`text-xs font-bold tracking-wide ${primaryTextClass}`}
+						className={`text-xs font-bold tracking-wide ${buttonTextClass}`}
 					>
 						{label}
 					</Text>

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 
-from app.core.security import hash_password
+from app.core.security import generate_account_code, hash_password
 from app.dependencies import AdminUser, DbSession
 from app.models.user import User
 from app.schemas.user import UserCreate, UserOut, UserUpdate
@@ -19,7 +19,13 @@ def create_user(payload: UserCreate, _: AdminUser, db: DbSession):
     if existing:
         raise HTTPException(status_code=400, detail="Username already exists")
 
+    while True:
+        code = generate_account_code(payload.role)
+        if not db.query(User).filter(User.account_code == code).first():
+            break
+
     user = User(
+        account_code=code,
         username=payload.username,
         hashed_password=hash_password(payload.password),
         role=payload.role,

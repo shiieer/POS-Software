@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { ActivityIndicator, ScrollView, Text, View } from "react-native";
 import ScreenContainer from "@/shared/components/ScreenContainer";
 import { useOrderDetail } from "../hooks/useOrderDetail";
@@ -5,6 +6,9 @@ import OrderDetailHeader from "../components/OrderDetailHeader";
 import OrderDetailItemsCard from "../components/OrderDetailItemsCard";
 import OrderDetailInfoCard from "../components/OrderDetailInfoCard";
 import OrderDetailActions from "../components/OrderDetailActions";
+import ConfirmOrderModal, {
+	ConfirmOrderActionType,
+} from "../components/ConfirmOrderModal";
 
 type Props = {
 	orderId: number;
@@ -25,6 +29,27 @@ export default function OrderDetailScreen({ orderId, onBack }: Props) {
 		cancelOrder,
 		printOrder,
 	} = useOrderDetail(orderId);
+
+	const [confirmAction, setConfirmAction] =
+		useState<ConfirmOrderActionType | null>(null);
+
+	const handleConfirm = async () => {
+		if (!confirmAction) return;
+		try {
+			if (confirmAction === "start_preparing") {
+				await startPreparing();
+			} else if (confirmAction === "mark_paid") {
+				await markPaid();
+			} else if (confirmAction === "cancel") {
+				await cancelOrder();
+				setConfirmAction(null);
+				onBack();
+				return;
+			}
+		} finally {
+			setConfirmAction(null);
+		}
+	};
 
 	return (
 		<ScreenContainer showHeader={false}>
@@ -58,16 +83,26 @@ export default function OrderDetailScreen({ orderId, onBack }: Props) {
 						<OrderDetailActions
 							order={order}
 							updating={updating}
-							onStartPreparing={startPreparing}
+							onStartPreparing={() => setConfirmAction("start_preparing")}
 							onMarkReady={markReady}
-							onMarkPaid={markPaid}
-							onCancel={async () => {
-								await cancelOrder();
-								onBack();
-							}}
+							onMarkPaid={() => setConfirmAction("mark_paid")}
+							onCancel={() => setConfirmAction("cancel")}
 							onPrint={printOrder}
 						/>
 					</ScrollView>
+
+					<ConfirmOrderModal
+						visible={!!confirmAction}
+						actionType={confirmAction}
+						orderCode={order.orderCode}
+						orderTitle={order.title}
+						totalAmount={order.totalAmount}
+						paymentMethod={order.paymentMethod}
+						paymentProofUrl={order.paymentProofUrl}
+						loading={updating}
+						onClose={() => setConfirmAction(null)}
+						onConfirm={handleConfirm}
+					/>
 				</>
 			)}
 		</ScreenContainer>

@@ -81,11 +81,14 @@ pos_software/
 ### Backend (FastAPI)
 - JWT authentication with admin and staff role separation
 - Full menu CRUD with image upload via Supabase Storage
+- Automatic deletion of associated menu images from Supabase Storage upon menu deletion, with historic order integrity preservation
 - Table management — create tables, generate QR codes, toggle active/inactive
 - Smart LAN IP detection when building QR URLs so phones can scan without manual config
 - QR token verification endpoint (`GET /tables/verify`)
 - Customer order creation — public endpoint, no auth required
+- Customer QRIS payment proof upload endpoint (`POST /order/{id}/payment-proof`) with image validation and Supabase Storage integration
 - Staff order lifecycle: `pending` → `preparing` → `ready` → `served`
+- Safeguards preventing cancellation of already paid orders
 - Payment tracking independent of kitchen status — cash or QRIS, paid or unpaid
 - QRIS payment confirmation workflow
 - Staff management (admin only)
@@ -100,27 +103,34 @@ pos_software/
 - Item quantity stepper directly on menu cards
 - Cart persisted in `localStorage` per table — survives page refresh
 - Checkout modal with optional customer name, order notes, and payment method (Cash / QRIS)
+- QRIS payment proof upload directly from gallery or camera (`capture="environment"`), with fullscreen zoom modal and replace option
 - Notification bell icon in header — always visible, lights up with a red badge on any order update
 - Bell drawer slides up from the bottom, drag down to dismiss (no close button)
 - Live order status per item in the notification drawer: pending → preparing ☕ → ready 🎉 → served
 - Payment line adapts per method: QRIS shows confirmation state, cash shows when to pay
-- `OrderDetailModal` shows kitchen status banner + payment banner, different for cash vs QRIS
+- `OrderDetailModal` shows kitchen status banner + payment banner, with QRIS payment proof upload/preview
 - `OrderSuccess` screen icon and heading update in real time with kitchen status
 - QRIS confirmation triggers browser OS notification (if permission granted)
 - Automatic LAN IP substitution — `VITE_API_URL` localhost is replaced with the current hostname at runtime
 
 ### Staff Mobile App (`app/`)
+- Custom animated splash screen on app launch
 - Secure login with JWT
 - Responsive layout — portrait uses bottom tabs, landscape switches to side rail
+- Merchant name loaded dynamically from backend settings across Login screen, feature headers, and profile (no hardcoded store name)
 - Tapping the active Menu tab while on add/edit screen returns to the menu list
 - **New Order screen** — pick Cash or QRIS, and choose Paid Now or Pay Later before submitting
 - **Order board** — status filter (All / New / Preparing / Ready / Served / Canceled) combined with payment filter (All / Unpaid / Paid)
 - Real-time polling every 6 seconds, pull-to-refresh supported
 - QRIS pending banner at top of order board for unconfirmed QRIS orders
+- Visual badge on order card when customer has attached a QRIS payment proof
+- Modal confirmation prompts for key actions (Start Preparing, Mark Paid, Cancel Order)
+- Order detail card with QRIS payment proof image preview and tap-to-expand modal
+- In-modal proof review when confirming QRIS payments
+- Protection against cancelling orders that are already paid
 - Table management — drag-to-dismiss settings sheet, simple slide animation for Active/Maintenance toggle
-- Merchant name loaded dynamically from backend settings, shown in all feature headers (no hardcoded store name)
-- Profile icon removed from all feature headers
-- Menu CRUD with image picker and category assignment
+- **Profile screen** — avatar upload (picks from photo library, uploads to Supabase `avatars` bucket), stats bar showing Orders Today / Role / Tenure, and account details section (account ID, joined date, active status)
+- Menu CRUD with image picker, category assignment, and delete confirmation with Supabase storage cleanup
 - Sales reports
 - Staff management (admin only)
 
@@ -170,6 +180,8 @@ SUPABASE_SERVICE_KEY=your-service-role-key
 SUPABASE_MENU_BUCKET=menu_images
 SUPABASE_QR_BUCKET=qr_codes
 SUPABASE_QRIS_BUCKET=qris
+SUPABASE_PAYMENT_PROOF_BUCKET=payment-proofs
+SUPABASE_AVATARS_BUCKET=avatars
 ```
 
 
@@ -247,10 +259,12 @@ Press `a` for Android emulator, `i` for iOS simulator, or scan the Expo QR with 
 
 ### QRIS
 1. Customer scans QRIS inside checkout modal, taps **Saya Sudah Bayar** → order created with `payment_method=qris`, `is_paid=false`
-2. Staff sees red **QRIS · PERLU KONFIRMASI** badge; red banner appears at top of order board
-3. Staff checks bank/GoBiz merchant app for incoming transfer notification
-4. Staff taps **Konfirmasi QRIS** → `is_paid=true`
-5. Customer web polls every 3 s and detects the change → green confirmation banner + OS notification (if permitted)
+2. Customer uploads payment transaction proof screenshot from camera or gallery directly on the success screen or order detail
+3. Staff sees red **QRIS · PERLU KONFIRMASI** badge and **Bukti QRIS Terlampir** badge on the order card
+4. Staff taps the order to review the customer's payment proof screenshot (tap to zoom/fullscreen) and checks bank/GoBiz incoming notification
+5. Staff taps **Konfirmasi QRIS** (confirmation modal displays payment proof summary) → `is_paid=true`
+6. Once marked as paid, the order cannot be accidentally cancelled
+7. Customer web polls every 3 s and detects the change → green confirmation banner + OS notification (if permitted)
 
 ---
 
@@ -260,10 +274,12 @@ Press `a` for Android emulator, `i` for iOS simulator, or scan the Expo QR with 
 |--------|----------|------|-------------|
 | `POST` | `/auth/login` | Public | Login, returns JWT |
 | `GET` | `/auth/me` | User | Current user info |
+| `POST` | `/auth/me/avatar` | User | Upload profile avatar image |
+| `GET` | `/auth/staff` | Public | List all active staff accounts |
 | `GET` | `/menu` | Public | List available menu items |
 | `POST` | `/menu` | Admin | Create menu item |
 | `PATCH` | `/menu/{id}` | Admin | Update menu item |
-| `DELETE` | `/menu/{id}` | Admin | Delete menu item |
+| `DELETE` | `/menu/{id}` | Admin | Delete menu item (auto-cleans Supabase storage) |
 | `POST` | `/menu/{id}/image` | Admin | Upload item image |
 | `DELETE` | `/menu/{id}/image` | Admin | Remove item image |
 | `GET` | `/tables/verify` | Public | Verify table QR token |
@@ -273,10 +289,11 @@ Press `a` for Android emulator, `i` for iOS simulator, or scan the Expo QR with 
 | `DELETE` | `/tables/{id}` | Admin | Delete table |
 | `GET` | `/tables/{id}/qr` | Admin | Get table QR image (PNG) |
 | `POST` | `/order` | Public | Submit customer order |
+| `POST` | `/order/{id}/payment-proof` | Public | Upload customer QRIS payment proof image |
 | `GET` | `/order` | Staff | List orders (status + active_only filters) |
 | `GET` | `/order/public/{id}` | Public | Get order status (customer polling) |
 | `GET` | `/order/{id}` | Staff | Get single order detail |
-| `PATCH` | `/order/{id}/status` | Staff | Update kitchen status |
+| `PATCH` | `/order/{id}/status` | Staff | Update kitchen status (prevents cancelling paid orders) |
 | `PATCH` | `/order/{id}/payment` | Staff | Confirm payment |
 | `GET` | `/reports/sales` | Admin | Sales report with date filters |
 | `GET` | `/staff` | Admin | List staff |

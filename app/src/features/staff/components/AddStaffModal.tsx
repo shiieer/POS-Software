@@ -1,6 +1,7 @@
 import { UserRole } from "@/types/api/user";
 import { Modal, Pressable, Text, TextInput, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useMerchantName } from "@/shared/hooks/useMerchantName";
 
 type Props = {
 	visible: boolean;
@@ -27,6 +28,7 @@ export default function AddStaffModal({
 	onClose,
 	onSubmit,
 }: Props) {
+	const merchantName = useMerchantName();
 	return (
 		<Modal visible={visible} transparent animationType="fade">
 			<View className="flex-1 items-center justify-center bg-slate-900/40 px-4">
@@ -45,7 +47,7 @@ export default function AddStaffModal({
 									Add New Staff
 								</Text>
 								<Text className="text-[11px] text-slate-400">
-									Invite member to Kedai Affo POS
+									Invite member to {merchantName}
 								</Text>
 							</View>
 						</View>

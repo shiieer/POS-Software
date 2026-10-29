@@ -2,9 +2,11 @@ export type UserRole = "admin" | "staff";
 
 export type UserApi = {
 	id: number;
+	account_code?: string;
 	username: string;
 	role: UserRole;
 	is_active: boolean;
+	avatar_url?: string | null;
 	created_at: string;
 };
 

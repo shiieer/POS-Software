@@ -33,6 +33,8 @@ class Settings(BaseSettings):
     SUPABASE_QR_BUCKET: str
     SUPABASE_QRIS_BUCKET: str = "qris"
     SUPABASE_QRIS: str = "qris"
+    SUPABASE_PAYMENT_PROOF_BUCKET: str = "payment-proofs"
+    SUPABASE_AVATARS_BUCKET: str = "avatars"
 
 
 settings = Settings()

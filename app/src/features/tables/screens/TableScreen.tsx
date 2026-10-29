@@ -13,12 +13,14 @@ import AddTableModal from "../components/AddTableModal";
 import DeleteTableModal from "../components/DeleteTableModal";
 import TableSettingsSheet from "../components/TableSettingsSheet";
 import { useTables } from "../hooks/useTables";
+import { useUserRole } from "@/shared/hooks/useUserRole";
 
 type Props = {
 	onBack: () => void;
 };
 
 export default function TableScreen({ onBack }: Props) {
+	const { isAdmin } = useUserRole();
 	const {
 		tables,
 		counts,
@@ -42,6 +44,7 @@ export default function TableScreen({ onBack }: Props) {
 	const [updating, setUpdating] = useState(false);
 
 	function openSettings(table: TableApi) {
+		if (!isAdmin) return;
 		setDraftActive(table.is_active);
 		setSettingsTable(table);
 	}
@@ -89,7 +92,7 @@ export default function TableScreen({ onBack }: Props) {
 	return (
 		<ScreenContainer showHeader={false}>
 			<TableHeader onBack={onBack} />
-			<TableOverview onAdd={() => setAdding(true)} />
+			<TableOverview onAdd={() => setAdding(true)} canAdd={isAdmin} />
 			<TableFilterBar filter={filter} counts={counts} onSelect={setFilter} />
 
 			{loading ? (
@@ -113,7 +116,9 @@ export default function TableScreen({ onBack }: Props) {
 							</View>
 							<Text className="text-base font-bold text-slate-600">No Tables Found</Text>
 							<Text className="mt-1 text-center text-sm text-slate-400">
-								Add a table to get started with QR ordering
+								{isAdmin
+									? "Add a table to get started with QR ordering"
+									: "Belum ada meja yang terdaftar."}
 							</Text>
 						</View>
 					}
@@ -121,8 +126,9 @@ export default function TableScreen({ onBack }: Props) {
 						<View className="flex-1">
 							<TableCard
 								table={item}
+								isAdmin={isAdmin}
 								onViewQr={() => setQrTable(item)}
-								onManage={() => openSettings(item)}
+								onManage={isAdmin ? () => openSettings(item) : undefined}
 							/>
 						</View>
 					)}
@@ -130,36 +136,40 @@ export default function TableScreen({ onBack }: Props) {
 			)}
 
 			<Toast message={toast} type="success" />
-			<AddTableModal
-				visible={adding}
-				name={name}
-				saving={saving}
-				onChangeName={setName}
-				onClose={() => setAdding(false)}
-				onSubmit={submitTable}
-			/>
 			<TableQrModal table={qrTable} onClose={() => setQrTable(null)} />
-			<TableSettingsSheet
-				table={settingsTable}
-				active={draftActive}
-				updating={updating}
-				onActiveChange={setDraftActive}
-				onClose={() => setSettingsTable(null)}
-				onSave={saveSettings}
-				onViewQr={(table) => {
-					setSettingsTable(null);
-					setQrTable(table);
-				}}
-				onDelete={(table) => {
-					setSettingsTable(null);
-					setDeleteTarget(table);
-				}}
-			/>
-			<DeleteTableModal
-				table={deleteTarget}
-				onCancel={() => setDeleteTarget(null)}
-				onConfirm={confirmDeleteTable}
-			/>
+			{isAdmin && (
+				<>
+					<AddTableModal
+						visible={adding}
+						name={name}
+						saving={saving}
+						onChangeName={setName}
+						onClose={() => setAdding(false)}
+						onSubmit={submitTable}
+					/>
+					<TableSettingsSheet
+						table={settingsTable}
+						active={draftActive}
+						updating={updating}
+						onActiveChange={setDraftActive}
+						onClose={() => setSettingsTable(null)}
+						onSave={saveSettings}
+						onViewQr={(table) => {
+							setSettingsTable(null);
+							setQrTable(table);
+						}}
+						onDelete={(table) => {
+							setSettingsTable(null);
+							setDeleteTarget(table);
+						}}
+					/>
+					<DeleteTableModal
+						table={deleteTarget}
+						onCancel={() => setDeleteTarget(null)}
+						onConfirm={confirmDeleteTable}
+					/>
+				</>
+			)}
 		</ScreenContainer>
 	);
 }

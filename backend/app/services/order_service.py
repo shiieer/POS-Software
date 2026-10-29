@@ -19,13 +19,15 @@ def _serialize_order(order: Order) -> OrderOut:
         payment_method=order.payment_method,
         notes=order.notes,
         total_amount=order.total_amount,
+        payment_proof_url=order.payment_proof_url,
         created_at=order.created_at,
         updated_at=order.updated_at,
         items=[
             {
                 "id": item.id,
                 "menu_item_id": item.menu_item_id,
-                "menu_item_name": item.menu_item.name if item.menu_item else None,
+                "menu_item_name": item.item_name
+                or (item.menu_item.name if item.menu_item else None),
                 "quantity": item.quantity,
                 "unit_price": item.unit_price,
                 "subtotal": item.subtotal,
@@ -86,6 +88,7 @@ def create_order(db: Session, payload: OrderCreate) -> OrderOut:
         order.items.append(
             OrderItem(
                 menu_item_id=menu_item.id,
+                item_name=menu_item.name,
                 quantity=item.quantity,
                 unit_price=menu_item.price,
                 subtotal=subtotal,
@@ -141,6 +144,12 @@ def update_order_status(
     order = db.query(Order).filter(Order.id == order_id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
+
+    if status == OrderStatus.CANCELLED and order.is_paid:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot cancel an order that has already been paid",
+        )
 
     order.status = status
     order.updated_by = current_user.id

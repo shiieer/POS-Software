@@ -10,6 +10,8 @@ def test_create_user_success(client, admin_headers):
     assert data["username"] == "newstaff"
     assert data["role"] == "staff"
     assert data["is_active"] is True
+    assert data["account_code"] is not None
+    assert data["account_code"].startswith("STF-")
 
 
 def test_create_user_duplicate_username(client, admin_headers):

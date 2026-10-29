@@ -5,6 +5,7 @@ import { formatRp } from "@/utils";
 
 type Props = {
 	snapshot: MoreSnapshot;
+	isAdmin?: boolean;
 };
 
 function compactRp(value: number) {
@@ -57,31 +58,40 @@ function SnapshotTile({
 	);
 }
 
-export default function SnapshotGrid({ snapshot }: Props) {
+export default function SnapshotGrid({ snapshot, isAdmin = true }: Props) {
 	return (
 		<View className="mb-5">
 			<Text className="mb-2 px-1 text-[11px] font-bold uppercase tracking-widest text-slate-400">
 				Store Snapshot
 			</Text>
 			<View className="gap-2.5">
-				<View className="flex-row gap-2.5">
-					{TILES.slice(0, 2).map((tile) => (
-						<SnapshotTile
-							key={tile.key}
-							tile={tile}
-							value={snapshot[tile.key]}
-						/>
-					))}
-				</View>
-				<View className="flex-row gap-2.5">
-					{TILES.slice(2).map((tile) => (
-						<SnapshotTile
-							key={tile.key}
-							tile={tile}
-							value={snapshot[tile.key]}
-						/>
-					))}
-				</View>
+				{isAdmin ? (
+					<>
+						<View className="flex-row gap-2.5">
+							{TILES.slice(0, 2).map((tile) => (
+								<SnapshotTile
+									key={tile.key}
+									tile={tile}
+									value={snapshot[tile.key]}
+								/>
+							))}
+						</View>
+						<View className="flex-row gap-2.5">
+							{TILES.slice(2).map((tile) => (
+								<SnapshotTile
+									key={tile.key}
+									tile={tile}
+									value={snapshot[tile.key]}
+								/>
+							))}
+						</View>
+					</>
+				) : (
+					<View className="flex-row gap-2.5">
+						<SnapshotTile tile={TILES[1]} value={snapshot.tables} />
+						<SnapshotTile tile={TILES[2]} value={snapshot.openTickets} />
+					</View>
+				)}
 			</View>
 		</View>
 	);

@@ -13,6 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useLogin } from "../hooks/useLogin";
+import { useMerchantName } from "@/shared/hooks/useMerchantName";
 import { fetchActiveStaffApi } from "@/services/api/auth.api";
 import { getRecentStaff, StoredStaff } from "@/services/storage/staffStorage";
 import { UserApi } from "@/types/api/user";
@@ -23,6 +24,7 @@ type Props = {
 };
 
 export default function LoginScreen({ onAuthenticated }: Props) {
+	const merchantName = useMerchantName();
 	const { form, loading, error, fieldErrors, setField, resetPassword, submit } =
 		useLogin(onAuthenticated);
 
@@ -170,7 +172,7 @@ export default function LoginScreen({ onAuthenticated }: Props) {
 												textTransform: "uppercase",
 											}}
 										>
-											AFFO
+											POS
 										</Text>
 									</View>
 								</LinearGradient>
@@ -185,7 +187,7 @@ export default function LoginScreen({ onAuthenticated }: Props) {
 										letterSpacing: -0.3,
 									}}
 								>
-									AFFO POS
+									{merchantName}
 								</Text>
 							</View>
 							<QuickSwitchCrew
@@ -244,13 +246,14 @@ export default function LoginScreen({ onAuthenticated }: Props) {
 												setField("username", value);
 												const match = staffList.find(
 													(u) =>
-														u.username.toLowerCase() === value.toLowerCase(),
+														u.username.toLowerCase() === value.toLowerCase() ||
+														(u.account_code && u.account_code.toLowerCase() === value.toLowerCase()),
 												);
 												setSelectedUser(match ?? null);
 											}}
 											onFocus={() => setFocusedField("username")}
 											onBlur={() => setFocusedField(null)}
-											placeholder="Staff username"
+											placeholder="Staff username or ID"
 											placeholderTextColor="#94a3b8"
 											autoCapitalize="none"
 											autoCorrect={false}

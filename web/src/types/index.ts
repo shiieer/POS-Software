@@ -52,6 +52,7 @@ export interface OrderOut {
   payment_method: string | null;
   notes: string | null;
   total_amount: number;
+  payment_proof_url: string | null;
   created_at: string;
   updated_at: string;
   items: OrderItemOut[];
